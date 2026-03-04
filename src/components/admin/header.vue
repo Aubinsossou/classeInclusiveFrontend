@@ -19,13 +19,34 @@
 
     <div class="header-part2">
       <div>
-        <span></span><router-link to="/" class="header-part2-link1">Tableau de bord</router-link>
+        <span></span
+        ><router-link to="/" active-class="active" class="header-part2-link1"
+          >Tableau de bord</router-link
+        >
       </div>
-      <div><span></span><router-link to="" class="header-part2-link2">Enseignant</router-link></div>
-      <div><span></span><router-link to="" class="header-part2-link3">Classes</router-link></div>
-      <div><span></span><router-link to="" class="header-part2-link4">Elèves</router-link></div>
       <div>
-        <span></span><router-link to="/matiere" class="header-part2-link5">Matières</router-link>
+        <span></span
+        ><router-link to="/ecole/enseignant" active-class="active" class="header-part2-link2"
+          >Enseignant</router-link
+        >
+      </div>
+      <div>
+        <span></span
+        ><router-link to="/ecole/classe" active-class="active" class="header-part2-link3"
+          >Classes</router-link
+        >
+      </div>
+      <div>
+        <span></span
+        ><router-link to="/ecole/eleve" active-class="active" class="header-part2-link4"
+          >Elèves</router-link
+        >
+      </div>
+      <div>
+        <span></span
+        ><router-link to="/ecole/matiere" active-class="active" class="header-part2-link5"
+          >Matières</router-link
+        >
       </div>
     </div>
     <div class="header-part3">
@@ -170,5 +191,7 @@
 }
 
 .active {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 10px;
 }
 </style>

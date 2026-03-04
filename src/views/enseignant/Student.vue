@@ -1,127 +1,3 @@
-<template>
-  <div class="admin-page">
-    <div class="page-header">
-      <div>
-        <h1 class="page-title">🧒 Mes élèves</h1>
-        <p class="page-sub">{{ connectedStudents.length }} connecté(s) en ce moment</p>
-      </div>
-    </div>
-
-    <section aria-labelledby="live-title">
-      <div class="section-header">
-        <h2 id="live-title" class="section-title">
-          🟢 Élèves connectés
-          <span class="live-dot" aria-label="En direct"></span>
-        </h2>
-      </div>
-      
-      <div v-if="connectedStudents.length" class="live-grid" role="list" aria-label="Élèves actuellement connectés">
-        <div v-for="s in connectedStudents" :key="s.id"
-          class="live-card" role="listitem"
-          :class="`lc-${s.profile}`"
-          :aria-label="`${s.name}, ${s.currentCourse}, progression ${s.progress}%`">
-          <div class="lc-top">
-            <div class="lc-avatar" aria-hidden="true">{{ profileIcon(s.profile) }}</div>
-            <div class="lc-info">
-              <div class="lc-name">{{ s.name }}</div>
-              <div class="lc-profile">{{ profileLabel(s.profile) }}</div>
-            </div>
-            <div class="lc-time" :aria-label="`Connecté à ${s.connectedAt}`">🕐 {{ s.connectedAt }}</div>
-          </div>
-          <div class="lc-course">
-            <span aria-hidden="true">📖</span>
-            <span>{{ s.currentCourse }}</span>
-          </div>
-          <div class="lc-progress-wrap">
-            <div class="lc-bar" role="progressbar" :aria-valuenow="s.progress" aria-valuemin="0" aria-valuemax="100" :aria-label="`Progression : ${s.progress}%`">
-              <div class="lc-fill" :style="{ width: s.progress + '%' }"></div>
-            </div>
-            <span class="lc-pct">{{ s.progress }}%</span>
-          </div>
-          <div class="lc-footer">
-            <span class="lc-badge-online">● En ligne</span>
-            <span class="lc-class">Classe {{ teacherClassIds.includes(s.classId) ? getClassName(s.classId) : '—' }}</span>
-          </div>
-        </div>
-      </div>
-      <div v-else class="empty-state">
-        <span aria-hidden="true">🟡</span>
-        <p>Aucun élève connecté en ce moment.</p>
-      </div>
-    </section>
-
-    <section aria-labelledby="all-students-title" style="margin-top: 28px;">
-      <div class="section-header">
-        <h2 id="all-students-title" class="section-title">📋 Tous mes élèves</h2>
-        <div class="filters">
-          <select v-model="filterClass" class="filter-select" aria-label="Filtrer par classe">
-            <option value="">Toutes mes classes</option>
-            <option v-for="cid in teacherClassIds" :key="cid" :value="cid">
-              {{ getClassName(cid) }}
-            </option>
-          </select>
-          <select v-model="filterProfile" class="filter-select" aria-label="Filtrer par profil">
-            <option value="">Tous les profils</option>
-            <option v-for="p in PROFILES" :key="p.value" :value="p.value">{{ p.icon }} {{ p.label }}</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="data-table-wrap">
-        <table class="data-table" aria-label="Liste des élèves">
-          <thead>
-            <tr>
-              <th scope="col">Élève</th>
-              <th scope="col">Profil</th>
-              <th scope="col">Classe</th>
-              <th scope="col">Statut</th>
-              <th scope="col">Progression moyenne</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="s in filteredStudents" :key="s.id" class="dt-row"
-              :aria-label="`${s.name}, profil ${s.profile}, ${s.active ? 'actif' : 'inactif'}`">
-              <td>
-                <div class="td-name-cell">
-                  <div class="td-avatar" :style="{ background: profileGradient(s.profile) }" aria-hidden="true">
-                    {{ profileIcon(s.profile) }}
-                  </div>
-                  <div>
-                    <div class="td-name">{{ s.name }}</div>
-                    <div class="td-dob">{{ formatDate(s.dob) }}</div>
-                  </div>
-                </div>
-              </td>
-              <td>
-                <span class="badge" :class="`badge-${s.profile}`">
-                  {{ profileIcon(s.profile) }} {{ profileLabel(s.profile) }}
-                </span>
-              </td>
-              <td><span class="badge badge-blue">{{ getClassName(s.classId) }}</span></td>
-              <td>
-                <span class="status-dot" :class="isConnected(s.id) ? 'sd-online' : (s.active ? 'sd-active' : 'sd-inactive')">
-                  {{ isConnected(s.id) ? '● En ligne' : (s.active ? '○ Actif' : '✕ Inactif') }}
-                </span>
-              </td>
-              <td>
-                <div class="prog-cell">
-                  <div class="prog-bar">
-                    <div class="prog-fill" :style="{ width: mockProgress(s.id) + '%' }"></div>
-                  </div>
-                  <span class="prog-pct">{{ mockProgress(s.id) }}%</span>
-                </div>
-              </td>
-            </tr>
-            <tr v-if="!filteredStudents.length">
-              <td colspan="5" class="empty-row">Aucun élève trouvé.</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-  </div>
-</template>
-
 <script setup>
 import { ref, computed } from 'vue'
 
@@ -203,6 +79,89 @@ function profileIcon(p)     { return profileIcons[p]  || '👤' }
 function profileLabel(p)    { return profileLabels[p] || p }
 function profileGradient(p) { return profileGrads[p]  || profileGrads.standard }
 </script>
+
+
+<template>
+  <div class="admin-page container">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">🧒 Mes élèves</h1>
+        <p class="page-sub">{{ connectedStudents.length }} connecté(s) en ce moment</p>
+      </div>
+    </div>
+
+    <section aria-labelledby="live-title" >
+      <div class="section-header" v-if="aucunEleveConnecter">
+        <h2 id="live-title" class="section-title">
+          🟢 Élèves connectés
+          <span class="live-dot" aria-label="En direct"></span>
+        </h2>
+      </div>
+      
+      
+      <div v-else class="empty-state">
+        <span aria-hidden="true">🟡</span>
+        <p>Aucun élève connecté en ce moment.</p>
+      </div>
+    </section>
+
+    <section aria-labelledby="all-students-title" style="margin-top: 28px;">
+      <div class="section-header">
+        <h2 id="all-students-title" class="section-title">📋 Tous mes élèves</h2>
+        <div class="filters">
+          <select v-model="filterProfile" class="filter-select" aria-label="Filtrer par profil">
+            <option value="">Tous les profils</option>
+            <option v-for="p in PROFILES" :key="p.value" :value="p.value">{{ p.icon }} {{ p.label }}</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="data-table-wrap">
+        <table class="data-table" aria-label="Liste des élèves">
+          <thead>
+            <tr>
+              <th scope="col">Élève</th>
+              <th scope="col">Profil</th>
+              <th scope="col">Classe</th>
+              <th scope="col">Statut</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="s in filteredStudents" :key="s.id" class="dt-row"
+              :aria-label="`${s.name}, profil ${s.profile}, ${s.active ? 'actif' : 'inactif'}`">
+              <td>
+                <div class="td-name-cell">
+                  <div class="td-avatar" :style="{ background: profileGradient(s.profile) }" aria-hidden="true">
+                    {{ profileIcon(s.profile) }}
+                  </div>
+                  <div>
+                    <div class="td-name">{{ s.name }}</div>
+                    <div class="td-dob">{{ formatDate(s.dob) }}</div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <span class="badge" :class="`badge-${s.profile}`">
+                  {{ profileIcon(s.profile) }} {{ profileLabel(s.profile) }}
+                </span>
+              </td>
+              <td><span class="badge badge-blue">{{ getClassName(s.classId) }}</span></td>
+              <td>
+                <span class="status-dot" :class="isConnected(s.id) ? 'sd-online' : (s.active ? 'sd-active' : 'sd-inactive')">
+                  {{ isConnected(s.id) ? '● En ligne' : (s.active ? '○ Actif' : '✕ Inactif') }}
+                </span>
+              </td>
+            </tr>
+            <tr v-if="!filteredStudents.length">
+              <td colspan="5" class="empty-row">Aucun élève trouvé.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</template>
+
 
 <style scoped>
 /* --- MISE EN PAGE PRINCIPALE --- */

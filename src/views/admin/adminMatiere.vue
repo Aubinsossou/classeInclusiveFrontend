@@ -1,4 +1,17 @@
-<script setup></script>
+<script setup>
+  import { ref,onMounted } from 'vue';
+
+  const showModalAjout = ref(false)
+  const showModalupdate = ref(false)
+
+  const toggleForm_ajout = ()=> {
+    showModalAjout.value = !showModalAjout.value
+  }
+    const toggleForm_update = ()=> {
+    showModalupdate.value = !showModalupdate.value
+  }
+
+</script>
 
 <template>
   <div class="container">
@@ -14,7 +27,7 @@
           <h1 data-v-57ff2339="" class="pro-page-title">Matières</h1>
           <p data-v-57ff2339="" class="pro-page-sub">6 matière(s) au programme</p>
         </div>
-        <button data-v-57ff2339="" class="pro-btn pro-btn-primary">
+        <button data-v-57ff2339="" class="pro-btn pro-btn-primary button_special" @click="toggleForm_ajout()" >
           <svg
             data-v-57ff2339=""
             width="16"
@@ -53,6 +66,7 @@
               class="pro-icon-btn"
               aria-label="Modifier Mathématiques"
               title="Modifier"
+              @click.prevent="toggleForm_update"
             >
               <svg
                 data-v-57ff2339=""
@@ -685,10 +699,12 @@
             <span data-v-57ff2339="" class="sc-footer-txt">0 enseignant</span>
           </div>
         </div>
-        <!-- Carte "Ajouter" --><button
+        <!-- Carte "Ajouter" -->
+        <button
           data-v-57ff2339=""
           class="subject-card sc-add"
           aria-label="Ajouter une matière"
+          @click.prevent="toggleForm_ajout"
         >
           <div data-v-57ff2339="" class="sc-add-icon">
             <svg
@@ -713,6 +729,55 @@
         </button>
       </div>
       <!-- Modal --><!--teleport start--><!--teleport end--><!--teleport start--><!--teleport end-->
+    </div>
+  </div>
+
+  <!-- FORMULAIRE D'AJOUT -->
+  <div  class="modal-overlay" v-show="showModalAjout">
+    <div class="form_container">
+      <div class="form_banner">
+        <h2>Ajouter un enseignant</h2>
+        <button  @click.prevent="toggleForm_ajout()" class="form_reduct_button">x</button>
+      </div>
+      <div class="form_ajout">
+        <form action="Ajouter" method="post">
+          <div class="form_grid">
+            <div class="form_grid_input">
+              <label for="Nom">Nom de la matière</label>
+              <input type="text" placeholder="Nom" />
+            </div>
+            
+          </div>
+        </form>
+      </div>
+      <div class="form_button">
+        <button @click.prevent="toggleForm_ajout()" class="button_annuler button_special" >Annuler</button>
+        <button class="button_ajouter button_special">+Ajouter</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FORMULAIRE DE MISE À JOUR -->
+  <div  class="modal-delete-overlay" v-if="showModalupdate">
+    <div class="form_container">
+      <div class="form_banner">
+        <h2>Modifier une matieère</h2>
+        <button @click.prevent="toggleForm_update()" class="form_reduct_button">x</button>
+      </div>
+      <div class="form_ajout">
+        <form action="Ajouter" method="post">
+          <div class="form_grid">
+            <div class="form_grid_input">
+              <label for="Nom">Nom de la matière</label>
+              <input type="text" placeholder="Nom" />
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="form_button">
+        <button @click="toggleForm_update()" class="button_annuler button_special">Annuler</button>
+        <button class="button_ajouter button_special">Enregistrer</button>
+      </div>
     </div>
   </div>
 </template>
@@ -953,5 +1018,281 @@
   .subjects-grid {
     grid-template-columns: 1fr 1fr;
   }
+}
+
+.form_container {
+  width: 550px;
+  margin: 0 auto;
+  border-radius: 40px;
+  color: #1a2b5e;
+  font-family: 'Nunito', sans-serif;
+  padding: 10px;
+  background-color: #fff;
+}
+
+.form_banner {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+}
+
+.form_reduct_button {
+  all: unset;
+  height: 36px;
+  width: 36px;
+  background-color: #e2eaff;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+}
+
+.form_reduct_button:hover {
+  transform: none;
+  color: #ff5c5c;
+  background-color: #ffe2e2;
+}
+
+.form_ajout {
+  padding: 10px 0;
+}
+
+.form_grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  padding: 10px;
+}
+
+.form_grid_input {
+  font-size: 0.88rem;
+  font-weight: 800;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.form_grid_input input {
+  padding: 12px 16px;
+  background-color: #fafcff;
+  border: 2px solid #d4e2ff;
+  border-radius: 18px;
+}
+
+.form_grid_input input::placeholder {
+  color: #6278a8;
+}
+
+.form_grid_input input:focus {
+  outline: none;
+  transition: 0.2s;
+  border-color: #4bbfed;
+}
+
+.form_button {
+  display: flex;
+  justify-content: end;
+  gap: 12px;
+  padding: 14px 10px;
+  border-top: 1.5px solid #e2eaff;
+}
+
+.button_annuler {
+  background-color: #fff;
+  color: #1a2b5e;
+  border: 2px solid #d4e2ff;
+  box-shadow: none;
+  
+}
+
+.button_annuler:hover {
+  border-color: #4bbfed;
+  background-color: #bfe8f8;
+  box-shadow: none;
+}
+
+.button_special {
+  font-family: 'Baloo 2', sans-serif;
+  color: white;
+  background-color: #4bbfed;
+  border-radius: 18px;
+  border-style: none;
+  font-size: 18px;
+  font-weight: bold;
+  padding: 14px 30px;
+  box-shadow: 0 6px 20px #4bbfed59;
+  transition: 0.3s ease-out;
+  cursor: pointer;
+}
+
+.button_special:hover {
+  background: #4bbfedde;
+  transition: 0.3s ease-out;
+  transform: translateY(-4px);
+}
+
+
+.classes_reduct_button {
+  all: unset;
+  height: 36px;
+  width: 36px;
+  background-color: #e2eaff;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+}
+
+.classes_reduct_button:hover {
+  transform: none;
+  background-color: #ffe2e2;
+  color: #ff5c5c;
+}
+
+/* modal css */
+.modal-overlay {
+  position: fixed;
+  z-index: 1000;
+  background-color: #1a2b5e8c;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  backdrop-filter: blur(10px);
+}
+
+.modal-second-overlay{
+  position: fixed;
+  z-index: 1000;
+  background-color: #1a2b5e8c;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  backdrop-filter: blur(10px);
+}
+
+.classes_container{
+  width: 430px;
+  margin: 0 auto;
+  border-radius: 40px;
+  color: #1a2b5e;
+  font-family: 'Nunito', sans-serif;
+  padding: 20px;
+  background-color: #fff;
+}
+
+.classes_banner{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px;
+}
+
+.classes_ajout{
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  margin-bottom: 10px;
+  width: 100%;
+}
+
+.classes_ajout select{
+  border: 2px solid #d4e2ff;
+  border-radius: 20px;
+  padding: 10px;
+  color: #1a2b5e;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.classes_ajout select:hover{
+  transition: 0.3s;
+  border-color: #1a88b8;
+  background-color: #c6edfc;
+}
+
+.classes_ajout select:focus{
+  transition: 0.3s;
+  background-color: #b0f5e4;
+  border-color: #0a7a54;
+}
+
+.classes_avatar{
+  height: 36px;
+  width: 36px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 15px;
+  background: linear-gradient(135deg, #22d4a0, #4bbfed);
+  font-family: 'Baloo 2', cursive;
+  font-weight: 900;
+  color: white;
+}
+
+.classes_name{
+  color: #1a2b5e;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.classes_footer{
+  padding: 16px 12px 10px 12px;
+  border-top: 1px solid #e2eaff;
+  display: flex;
+  justify-content: center;
+}
+
+.classes_footer button{
+  width: 100%;
+}
+
+.modal-third-overlay{
+  position: fixed;
+  z-index: 1000;
+  background-color: #1a2b5e8c;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  backdrop-filter: blur(10px);
+}
+
+.delete_body{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+}
+.delete_body_svg{
+  height: 100px;
+  width: 100px;
+}
+
+.modal-delete-overlay{
+  position: fixed;
+  z-index: 1000;
+  background-color: #1a2b5e8c;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  backdrop-filter: blur(10px);
 }
 </style>

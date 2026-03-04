@@ -67,7 +67,7 @@
           <div class="position-relative">
             <span class="top-0 sc-trend">+2 ce mois</span>
             <div class="position-absolute bottom-0 end-0">
-              <a href=""
+              <a href="/ecole/enseignant"
                 >Gérer
                 <span>
                   <svg
@@ -144,7 +144,7 @@
           <div class="position-relative">
             <span class="top-0 sc-trend">+2 ce mois</span>
             <div class="position-absolute bottom-0 end-0">
-              <a href="" style="color: #059669"
+              <a href="/ecole/classe" style="color: #059669"
                 >Gérer
                 <span>
                   <svg
@@ -214,7 +214,7 @@
               >+2 ce mois</span
             >
             <div class="position-absolute bottom-0 end-0">
-              <a href="" style="color: #7c3aed"
+              <a href="ecole/eleve" style="color: #7c3aed"
                 >Gérer
                 <span>
                   <svg
@@ -273,7 +273,7 @@
               >+2 ce mois</span
             >
             <div class="position-absolute bottom-0 end-0">
-              <a href="" style="color: #d97706"
+              <a href="ecole/matiere" style="color: #d97706"
                 >Gérer
                 <span>
                   <svg
@@ -335,7 +335,7 @@
               ></span>
               <span class="en-tete-card-title">Enseignant récents</span>
             </div>
-            <div><a href="" class="en-tete-card-lien">Gérer</a></div>
+            <div><a href="/ecole/enseignant" class="en-tete-card-lien">Gérer</a></div>
           </div>
 
           <div class="card-body">
@@ -486,7 +486,7 @@
               ></span>
               <span class="en-tete-card-title">Vue des Classes</span>
             </div>
-            <div><a href="" class="en-tete-card-lien">Voir tous</a></div>
+            <div><a href="/ecole/classe" class="en-tete-card-lien">Voir tous</a></div>
           </div>
           <div class="card-body">
             <div class="card-body-left">
