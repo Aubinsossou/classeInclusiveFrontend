@@ -51,32 +51,31 @@ const affiche = async (id) => {
   const response = await apiGet('ecole/classe/edit/' + id)
   classeEdit.value = response
   classeUpdateId.value = id
-  
-  console.log('classeEdit.value: ', classeEdit.value) 
+
+  console.log('classeEdit.value: ', classeEdit.value)
 }
 
 /* Api pour update classe */
 
-const apiClasseUpdate = (classeUpdateId) =>{
-  const response = apiPut("ecole/classe/update/" + classeUpdateId,{
+const apiClasseUpdate = (classeUpdateId) => {
+  const response = apiPut('ecole/classe/update/' + classeUpdateId, {
     name: formDataUpdateName.value,
     ecole_id: userAuth.value.id,
   })
   classeUpdate.value = response
-  console.log(' classeUpdate.value: ',  classeUpdate.value);
-  console.log('formDataUpdateName.value: ', formDataUpdateName.value);
+  console.log(' classeUpdate.value: ', classeUpdate.value)
+  console.log('formDataUpdateName.value: ', formDataUpdateName.value)
   visible.value = false
   apiGEtListeClasse()
-
 }
 
 /* Api pour delete */
 
-const apiClasseDelete = async (id) =>{
-  const response = await apiDelete("ecole/classe/destroy/" + id)
+const apiClasseDelete = async (id) => {
+  const response = await apiDelete('ecole/classe/destroy/' + id)
   classeDelete.value = response
   apiGEtListeClasse()
-  console.log('classeDelete.value: ', classeDelete.value);
+  console.log('classeDelete.value: ', classeDelete.value)
 }
 
 // function alterne() {
@@ -142,7 +141,12 @@ onMounted(() => {
         <form action="" class="form_grid">
           <div class="field">
             <label for="formDataUpdateName">Nom de la classe</label>
-            <input type="text" id="formDataUpdateName" name="formDataUpdateName" v-model="classeEdit.data.name"/>
+            <input
+              type="text"
+              id="formDataUpdateName"
+              name="formDataUpdateName"
+              v-model="classeEdit.data.name"
+            />
           </div>
         </form>
       </div>
