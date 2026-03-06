@@ -1,5 +1,7 @@
 <script setup>
 import { ref } from 'vue'
+import { apiGet,apiPost,apiPut,apiDelete } from '@/helpers/axiosApi'
+
 
 //Script d'apparition et de disparition du formulaire d'ajout
 const showForm_ajout = ref(false)

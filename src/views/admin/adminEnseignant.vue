@@ -1,5 +1,107 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { apiPost, apiGet, apiPut, apiDelete } from '@/helpers/axiosApi'
+
+const infoOfRegister = ref()
+const getEnseignantAssigneClasse = ref()
+const listeEnseignants = ref()
+const enseignantEdit = ref()
+const enseignantUpdate = ref()
+const enseignantDelete = ref()
+const enseignatSelectOfDelete = ref()
+const formData = ref({
+  nom: '',
+  prenom: '',
+  email: '',
+  matricule: '',
+  numero: '',
+})
+
+/* APi liste des enseignants */
+
+const apiGetListeEnseignant = async () => {
+  const response = await apiGet('/ecole/enseignant/index')
+  listeEnseignants.value = response.data
+  console.log(listeEnseignants)
+}
+
+/* Api pour le register de l'enseignant */
+
+const apiRegisterEnseignant = async () => {
+  try {
+    const response = await apiPost('/ecole/enseignant/registerEnseignant', {
+      name: formData.value.nom,
+      prenom: formData.value.prenom,
+      email: formData.value.email,
+      numero: formData.value.numero,
+      matricule: formData.value.matricule,
+      ecole_id: 1,
+    })
+
+    infoOfRegister.value = response
+    console.log(infoOfRegister.value)
+    toggleForm_ajout()
+  } catch (err) {
+    return console.error('Erreur API POST :', err)
+  }
+}
+
+/* Api update enseignant  */
+
+const apiPutEnseignant = async (id) => {
+  const response = await apiPut('/ecole/enseignant/update/' + id, {
+    name: nameUpdate.value,
+    email: emailUpdate.value,
+    matricule: matriculeUpdate.value,
+    prenom: prenomUpdate.value,
+    numero: numeroUpdate.value,
+  })
+  enseignantUpdate.value = response
+  console.log(enseignantUpdate.value)
+  // console.log(nameUpdate.value)
+  // console.log(emailUpdate.value)
+  // console.log(prenomUpdate.value)
+  // console.log(matriculeUpdate.value)
+  // console.log(numeroUpdate.value)
+}
+
+/* Api pour assigner une classe */
+
+const apiGetEnseignantAssigneClasse = async (id) => {
+  try {
+    const response = await apiGet('/ecole/enseignant/edit/' + id)
+
+    getEnseignantAssigneClasse.value = response.data
+    console.log(getEnseignantAssigneClasse.value)
+  } catch (err) {
+    console.error('Erreur API GET :', err)
+  }
+}
+
+/* Assigner classe */
+
+const assigneClasse = async (enseignant_id, ecole_id, classe_id) => {
+  const response = await apiPut('/ecole/enseignant/update', {
+    enseignant_id: enseignant_id,
+    ecole_id: ecole_id,
+    classe_id: classe_id,
+  })
+}
+
+/* Supprimer un enseignant */
+const apiDeleteEnseignant = async (id) => {
+  const response = await apiDelete('/ecole/enseignant/logout/' + id)
+
+  enseignantDelete.value = response
+
+  showForm_delete.value = false
+  apiGetListeEnseignant()
+}
+
+const formConsole = () => {
+  console.log(formData.value)
+}
+
 //Script d'apparition et de disparition du formulaire d'ajout
 const showForm_ajout = ref(false)
 const toggleForm_ajout = () => {
@@ -8,33 +110,41 @@ const toggleForm_ajout = () => {
 
 //Script d'apparition et de disparition du formulaire d'update
 const showForm_update = ref(false)
-const toggleForm_update = () => {
+const toggleForm_update = async (id) => {
   showForm_update.value = !showForm_update.value
+  enseignantEdit.value = await apiGetEnseignantAssigneClasse(id)
 }
 
 //Script d'apparition et de disparition du formulaire d'attribution de classe
 const showForm_classes = ref(false)
 const toggleForm_classes = () => {
   showForm_classes.value = !showForm_classes.value
+  apiGetEnseignantAssigneClasse(5)
 }
 
 //Script pour changer la couleur d'une classe après l'avoir sélectionné
-const select_classes = ref([])
-const toggleSelect_classes = (id) => {
-  const index = select_classes.value.indexOf(id)
-  if (index > -1) {
-    select_classes.value.splice(index, 1)
-  }
-  else {
-    select_classes.value.push(id)
-  }
-}
+// const select_classes = ref([])
+// const toggleSelect_classes = (id) => {
+//   const index = select_classes.value.indexOf(id)
+//   if (index > -1) {
+//     select_classes.value.splice(index, 1)
+//   }
+//   else {
+//     select_classes.value.push(id)
+//   }
+// }
 
 //Script d'apparition pour la confirmation de suppression
 const showForm_delete = ref(false)
-const toggleForm_delete = () => {
+const toggleForm_delete = (id) => {
   showForm_delete.value = !showForm_delete.value
+  enseignatSelectOfDelete.value = id
+  console.log("id de l'enseignant a delete " + id)
 }
+
+onMounted(() => {
+  apiGetListeEnseignant()
+})
 </script>
 
 <template>
@@ -61,7 +171,7 @@ const toggleForm_delete = () => {
             placeholder="Rechercher par nom, email,matière..."
             class="search-bar"
           />
-          <div class="wrap">
+          <div class="wrap" v-if="listeEnseignants">
             <table class="basse_container_table">
               <thead>
                 <tr>
@@ -73,19 +183,19 @@ const toggleForm_delete = () => {
                 </tr>
               </thead>
               <tbody>
-                <tr>
+                <tr v-for="enseignant in listeEnseignants">
                   <td class="td_name_cell">
                     <div class="td_avatar">H</div>
                     <div class="name_sub">
-                      <div class="td_name">HEVOU Victorius</div>
-                      <div class="td_sub">0195035500</div>
+                      <div class="td_name">{{ enseignant.name }}</div>
+                      <div class="td_sub">{{ enseignant.numero }}</div>
                     </div>
                   </td>
-                  <td class="td_email">hevouvictorius@gmail.com</td>
+                  <td class="td_email">{{ enseignant.email }}</td>
                   <td class="td_classe"><span class="classe_blue_badge">CM2</span></td>
                   <td class="td_date_ajout">2025-09-05</td>
                   <td class="td_actions">
-                    <a @click="toggleForm_update()" class="td_actions_update">
+                    <a @click="toggleForm_update(enseignant.id)" class="td_actions_update">
                       <svg
                         height="100%"
                         width="100%"
@@ -164,7 +274,7 @@ const toggleForm_delete = () => {
                         />
                       </svg>
                     </a>
-                    <a @click="toggleForm_delete()" class="td_actions_delete">
+                    <a @click="toggleForm_delete(enseignant.id)" class="td_actions_delete">
                       <svg
                         viewBox="0 0 1024 1024"
                         xmlns="http://www.w3.org/2000/svg"
@@ -242,30 +352,34 @@ const toggleForm_delete = () => {
         <button @click="toggleForm_ajout()" class="form_reduct_button">x</button>
       </div>
       <div class="form_ajout">
-        <form action="Ajouter" method="post">
+        <form action="Ajouter" method="post" @submit.prevent="apiRegisterEnseignant">
           <div class="form_grid">
             <div class="form_grid_input">
-              <label for="Nom">Nom</label>
-              <input type="text" placeholder="Nom" />
+              <label for="nom">Nom</label>
+              <input type="text" placeholder="Nom" v-model="formData.nom" />
             </div>
             <div class="form_grid_input">
               <label for="Prénom">Prénom</label>
-              <input type="text" placeholder="Prénom" />
+              <input type="text" placeholder="Prénom" v-model="formData.prenom" />
             </div>
             <div class="form_grid_input">
               <label for="Numéro">Téléphone</label>
-              <input type="number" placeholder="0123456789" />
+              <input type="text" placeholder="0123456789" v-model="formData.numero" />
             </div>
             <div class="form_grid_input">
               <label for="Email">Email</label>
-              <input type="email" placeholder="*******@gmail.com" />
+              <input type="email" placeholder="*******@gmail.com" v-model="formData.email" />
+            </div>
+            <div class="form_grid_input">
+              <label for="matricule">Matricule</label>
+              <input type="text" id="matricule" v-model="formData.matricule" />
             </div>
           </div>
+          <div class="form_button">
+            <button @click="toggleForm_ajout()" class="button_annuler">Annuler</button>
+            <button class="button_ajouter" type="submit">+Ajouter</button>
+          </div>
         </form>
-      </div>
-      <div class="form_button">
-        <button @click="toggleForm_ajout()" class="button_annuler">Annuler</button>
-        <button class="button_ajouter">+Ajouter</button>
       </div>
     </div>
   </div>
@@ -274,34 +388,63 @@ const toggleForm_delete = () => {
   <div v-if="showForm_update" @click.self="toggleForm_update()" class="modal-delete-overlay">
     <div class="form_container">
       <div class="form_banner">
-        <h2>Ajouter un enseignant</h2>
+        <h2>Modifier un enseignant</h2>
         <button @click="toggleForm_update()" class="form_reduct_button">x</button>
       </div>
-      <div class="form_ajout">
-        <form action="Ajouter" method="post">
+      <div class="form_ajout" v-if="getEnseignantAssigneClasse">
+        <form method="post">
           <div class="form_grid">
             <div class="form_grid_input">
-              <label for="Nom">Nom</label>
-              <input type="text" placeholder="Nom" />
+              <label for="nameUpdate"> Nom</label>
+              <input
+                type="text"
+                placeholder="Nom"
+                v-model="getEnseignantAssigneClasse.name"
+                id="nameUpdate"
+                name="nameUpdate"
+              />
             </div>
             <div class="form_grid_input">
-              <label for="Prénom">Prénom</label>
-              <input type="text" placeholder="Prénom" />
+              <label for="prenomUpdate">Prénom</label>
+              <input
+                type="text"
+                id="prenomUpdate"
+                placeholder="Prénom"
+                v-model="getEnseignantAssigneClasse.prenom"
+              />
             </div>
             <div class="form_grid_input">
-              <label for="Numéro">Téléphone</label>
-              <input type="number" placeholder="0123456789" />
+              <label for="numeroUpdate">Téléphone</label>
+              <input
+                type="text"
+                id="numeroUpdate"
+                placeholder="0123456789"
+                v-model="getEnseignantAssigneClasse.numero"
+              />
             </div>
             <div class="form_grid_input">
-              <label for="Email">Email</label>
-              <input type="email" placeholder="*******@gmail.com" />
+              <label for="emailUpdate">Email</label>
+              <input
+                type="email"
+                id="emailUpdate"
+                placeholder="*******@gmail.com"
+                v-model="getEnseignantAssigneClasse.email"
+              />
+            </div>
+            <div class="form_grid_input">
+              <label for="matriculeUpdate">Matricule</label>
+              <input
+                type="text"
+                id="matriculeUpdate"
+                v-model="getEnseignantAssigneClasse.matricule"
+              />
             </div>
           </div>
+          <div class="form_button">
+            <button @click="toggleForm_update()" class="button_annuler">Annuler</button>
+            <button class="button_ajouter" @click.prevent="apiPutEnseignant">Enregistrer</button>
+          </div>
         </form>
-      </div>
-      <div class="form_button">
-        <button @click="toggleForm_update()" class="button_annuler">Annuler</button>
-        <button class="button_ajouter">Enregistrer</button>
       </div>
     </div>
   </div>
@@ -309,11 +452,11 @@ const toggleForm_delete = () => {
   <!-- FORMULAIRE DE CHOIX DES CLASSES -->
   <div v-if="showForm_classes" @click.self="toggleForm_classes()" class="modal-second-overlay">
     <div class="classes_container">
-      <div class="classes_banner" >
+      <div class="classes_banner">
         <h2>Assigner une classe</h2>
         <button @click="toggleForm_classes()" class="classes_reduct_button">x</button>
       </div>
-      <div class="classes_ajout" >
+      <div class="classes_ajout">
         <select name="classes" id="classes_id">
           <option value="CI">CI</option>
           <option value="CP">CP</option>
@@ -321,13 +464,13 @@ const toggleForm_delete = () => {
         </select>
       </div>
       <div class="classes_footer">
-        <button>Confirmer</button>
+        <button @click.prevent="assigneClasse()">Confirmer</button>
       </div>
     </div>
   </div>
 
   <!-- Confirmation de suppression d'enseignant -->
-   <div v-if="showForm_delete" @click.self="toggleForm_delete()" class="modal-third-overlay">
+  <div v-if="showForm_delete" @click.self="toggleForm_delete()" class="modal-third-overlay">
     <div class="classes_container">
       <div class="classes_banner">
         <h2>Supprimer cet enseignant</h2>
@@ -344,11 +487,7 @@ const toggleForm_delete = () => {
             fill="#000000"
           >
             <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-            <g
-              id="SVGRepo_tracerCarrier"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            ></g>
+            <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
             <g id="SVGRepo_iconCarrier">
               <path d="M724.3 198H296.1l54.1-146.6h320z" fill="#FAFCFB"></path>
               <path
@@ -398,10 +537,10 @@ const toggleForm_delete = () => {
         <p>Cette action est irréversible.</p>
       </div>
       <div class="classes_footer">
-        <button>Supprimer</button>
+        <button @click.prevent="apiDeleteEnseignant(enseignatSelectOfDelete)">Supprimer</button>
       </div>
     </div>
-   </div>
+  </div>
 </template>
 
 <style scoped>
@@ -727,7 +866,7 @@ td {
   backdrop-filter: blur(10px);
 }
 
-.modal-second-overlay{
+.modal-second-overlay {
   position: fixed;
   z-index: 1000;
   background-color: #1a2b5e8c;
@@ -741,7 +880,7 @@ td {
   backdrop-filter: blur(10px);
 }
 
-.classes_container{
+.classes_container {
   width: 430px;
   margin: 0 auto;
   border-radius: 40px;
@@ -751,14 +890,14 @@ td {
   background-color: #fff;
 }
 
-.classes_banner{
+.classes_banner {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 10px;
 }
 
-.classes_ajout{
+.classes_ajout {
   display: flex;
   flex-direction: column;
   padding: 10px;
@@ -766,7 +905,7 @@ td {
   width: 100%;
 }
 
-.classes_ajout select{
+.classes_ajout select {
   border: 2px solid #d4e2ff;
   border-radius: 20px;
   padding: 10px;
@@ -775,19 +914,19 @@ td {
   font-weight: 800;
 }
 
-.classes_ajout select:hover{
+.classes_ajout select:hover {
   transition: 0.3s;
   border-color: #1a88b8;
   background-color: #c6edfc;
 }
 
-.classes_ajout select:focus{
+.classes_ajout select:focus {
   transition: 0.3s;
   background-color: #b0f5e4;
   border-color: #0a7a54;
 }
 
-.classes_avatar{
+.classes_avatar {
   height: 36px;
   width: 36px;
   display: flex;
@@ -800,24 +939,24 @@ td {
   color: white;
 }
 
-.classes_name{
+.classes_name {
   color: #1a2b5e;
   font-size: 0.9rem;
   font-weight: 800;
 }
 
-.classes_footer{
+.classes_footer {
   padding: 16px 12px 10px 12px;
   border-top: 1px solid #e2eaff;
   display: flex;
   justify-content: center;
 }
 
-.classes_footer button{
+.classes_footer button {
   width: 100%;
 }
 
-.modal-third-overlay{
+.modal-third-overlay {
   position: fixed;
   z-index: 1000;
   background-color: #1a2b5e8c;
@@ -831,19 +970,19 @@ td {
   backdrop-filter: blur(10px);
 }
 
-.delete_body{
+.delete_body {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 10px;
   padding: 10px;
 }
-.delete_body_svg{
+.delete_body_svg {
   height: 100px;
   width: 100px;
 }
 
-.modal-delete-overlay{
+.modal-delete-overlay {
   position: fixed;
   z-index: 1000;
   background-color: #1a2b5e8c;

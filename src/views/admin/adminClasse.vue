@@ -1,16 +1,92 @@
 <script setup>
-import { ref } from 'vue'
-let disp_form = ref(null)
+import { ref, onMounted } from 'vue'
+import { apiGet, apiPost, apiPut, apiDelete } from '@/helpers/axiosApi'
+const formData = ref({
+  name: '',
+})
+const classeCreate = ref()
+const userAuth = ref()
+const listeClasse = ref()
+const classeEdit = ref()
+const classeUpdateId = ref()
+const classeUpdate = ref()
+const classeDelete = ref()
+
 let visible = ref(false)
 let visible_ajout = ref(false)
 
-function affiche() {
-  disp_form.value.style.display = 'flex'
+/* User connecter */
+const apiGetUser = async () => {
+  const response = await apiGet('ecole/getEcole')
+  userAuth.value = response.data
+  console.log(' userAuth.value: ', userAuth.value)
 }
 
-function alterne() {
-  visible = !visible
+/* Api de creation de classe  */
+
+const apiPostClasse = () => {
+  const response = apiPost('/ecole/classe/store', {
+    name: formData.value.name,
+    ecole_id: userAuth.value.id,
+  })
+  visible_ajout.value = false
+
+  classeCreate.value = response
+  apiGEtListeClasse()
+  console.log(classeCreate.value)
 }
+
+/* Api liste des classes */
+
+const apiGEtListeClasse = async () => {
+  const response = await apiGet('ecole/classe/index')
+  listeClasse.value = response.data
+  console.log(' listeClasse: ', listeClasse.value)
+}
+
+/* function pour display form update et lancer le edit */
+
+const affiche = async (id) => {
+  visible.value = true
+  const response = await apiGet('ecole/classe/edit/' + id)
+  classeEdit.value = response
+  classeUpdateId.value = id
+  
+  console.log('classeEdit.value: ', classeEdit.value) 
+}
+
+/* Api pour update classe */
+
+const apiClasseUpdate = (classeUpdateId) =>{
+  const response = apiPut("ecole/classe/update/" + classeUpdateId,{
+    name: formDataUpdateName.value,
+    ecole_id: userAuth.value.id,
+  })
+  classeUpdate.value = response
+  console.log(' classeUpdate.value: ',  classeUpdate.value);
+  console.log('formDataUpdateName.value: ', formDataUpdateName.value);
+  visible.value = false
+  apiGEtListeClasse()
+
+}
+
+/* Api pour delete */
+
+const apiClasseDelete = async (id) =>{
+  const response = await apiDelete("ecole/classe/destroy/" + id)
+  classeDelete.value = response
+  apiGEtListeClasse()
+  console.log('classeDelete.value: ', classeDelete.value);
+}
+
+// function alterne() {
+//   visible.value = !visible.value
+// }
+
+onMounted(() => {
+  apiGetUser()
+  apiGEtListeClasse()
+})
 </script>
 
 <template>
@@ -24,106 +100,22 @@ function alterne() {
         <button class="add_class" @click="visible_ajout = true">Ajouter une classe</button>
       </div>
     </div>
-    <div class="middle">
-      <div class="card_class">
+    <div class="middle" v-if="listeClasse">
+      <div class="card_class" v-for="Classe in listeClasse">
         <div class="class_top">
           <div class="class_top_left">
-            <p><span>CP</span></p>
+            <p>
+              <span>{{ Classe.name }}</span>
+            </p>
           </div>
           <div class="class_top_right">
-            <button class="card_edit" @click="visible = true">✏️</button>
-            <button class="card_delete">🗑️</button>
+            <button class="card_edit" @click.prevent="affiche(Classe.id)">✏️</button>
+            <button class="card_delete" @click.prevent="apiClasseDelete(Classe.id)">🗑️</button>
           </div>
         </div>
-        <h3>CP-A</h3>
+        <h3>{{ Classe.name }}</h3>
         <div class="class_middle">
           <p>Mr Thomas EDEA</p>
-          <p>Salle 5</p>
-          <p>2025-2026</p>
-        </div>
-        <div class="class_low">
-          <div class="class_low_left">
-            <h4>22</h4>
-            <p>élèves</p>
-          </div>
-          <div class="class_low_right">
-            <div class="progress_bar">
-              <div class="progression"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="card_class">
-        <div class="class_top">
-          <div class="class_top_left">
-            <p><span>CP</span></p>
-          </div>
-          <div class="class_top_right">
-            <button class="card_edit" @click="visible = true">✏️</button>
-            <button class="card_delete">🗑️</button>
-          </div>
-        </div>
-        <h3>CP-A</h3>
-        <div class="class_middle">
-          <p>Mr Thomas EDEA</p>
-          <p>Salle 5</p>
-          <p>2025-2026</p>
-        </div>
-        <div class="class_low">
-          <div class="class_low_left">
-            <h4>22</h4>
-            <p>élèves</p>
-          </div>
-          <div class="class_low_right">
-            <div class="progress_bar">
-              <div class="progression"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="card_class">
-        <div class="class_top">
-          <div class="class_top_left">
-            <p><span>CP</span></p>
-          </div>
-          <div class="class_top_right">
-            <button class="card_edit" @click="visible = true">✏️</button>
-            <button class="card_delete">🗑️</button>
-          </div>
-        </div>
-        <h3>CP-A</h3>
-        <div class="class_middle">
-          <p>Mr Thomas EDEA</p>
-          <p>Salle 5</p>
-          <p>2025-2026</p>
-        </div>
-        <div class="class_low">
-          <div class="class_low_left">
-            <h4>22</h4>
-            <p>élèves</p>
-          </div>
-          <div class="class_low_right">
-            <div class="progress_bar">
-              <div class="progression"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="card_class">
-        <div class="class_top">
-          <div class="class_top_left">
-            <p><span>CP</span></p>
-          </div>
-          <div class="class_top_right">
-            <button class="card_edit" @click="visible = true">✏️</button>
-            <button class="card_delete">🗑️</button>
-          </div>
-        </div>
-        <h3>CP-A</h3>
-        <div class="class_middle">
-          <p>Mr Thomas EDEA</p>
-          <p>Salle 5</p>
-          <p>2025-2026</p>
         </div>
         <div class="class_low">
           <div class="class_low_left">
@@ -141,7 +133,7 @@ function alterne() {
   </div>
 
   <div id="formulaire" class="overlay" ref="disp_form" v-show="visible">
-    <div class="contenu">
+    <div class="contenu" v-if="classeEdit">
       <button class="fermer" @click="visible = false">X</button>
       <div class="high_overlay">
         <h2>Modifier une classe</h2>
@@ -149,34 +141,15 @@ function alterne() {
       <div class="middle_overlay">
         <form action="" class="form_grid">
           <div class="field">
-            <label for="class_name">Nom de la classe</label>
-            <input type="text" id="class_name" />
-          </div>
-          <div class="field">
-            <label for="class_level">Niveau</label>
-            <select name="Niveau" id="class_level">
-              Niveau
-            </select>
-          </div>
-          <div class="field">
-            <label for="the_class">Salle</label>
-            <input type="text" id="the_class" />
-          </div>
-          <div class="field">
-            <label for="year">Année scolaire</label>
-            <input type="text" id="year" />
-          </div>
-          <div class="field">
-            <label for="professor">Professeur principal</label>
-            <input type="text" id="professor" />
-            <p>Optionnel — peut être assigné plus tard</p>
+            <label for="formDataUpdateName">Nom de la classe</label>
+            <input type="text" id="formDataUpdateName" name="formDataUpdateName" v-model="classeEdit.data.name"/>
           </div>
         </form>
       </div>
       <div class="trait"></div>
       <div class="low_overlay">
-        <button>Créer</button>
-        <button>Annuler</button>
+        <button @click.prevent="apiClasseUpdate(classeUpdateId)">Enregistrer</button>
+        <button @click.prevent="visible = false">Annuler</button>
       </div>
     </div>
   </div>
@@ -191,40 +164,20 @@ function alterne() {
         <form action="" class="form_grid">
           <div class="field">
             <label for="class_name">Nom de la classe</label>
-            <input type="text" id="class_name" />
-          </div>
-          <div class="field">
-            <label for="class_level">Niveau</label>
-            <select name="Niveau" id="class_level">
-              Niveau
-            </select>
-          </div>
-          <div class="field">
-            <label for="the_class">Salle</label>
-            <input type="text" id="the_class" />
-          </div>
-          <div class="field">
-            <label for="year">Année scolaire</label>
-            <input type="text" id="year" />
-          </div>
-          <div class="field">
-            <label for="professor">Professeur principal</label>
-            <input type="text" id="professor" />
-            <p>Optionnel — peut être assigné plus tard</p>
+            <input type="text" id="class_name" v-model="formData.name" />
           </div>
         </form>
       </div>
       <div class="trait"></div>
       <div class="low_overlay">
-        <button>Créer</button>
-        <button>Annuler</button>
+        <button @click.prevent="apiPostClasse">Créer</button>
+        <button @click.prevent="visible_ajout = false">Annuler</button>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-
 * {
   padding: 0;
   margin: 0;

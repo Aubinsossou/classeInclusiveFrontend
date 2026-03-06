@@ -48,6 +48,12 @@
           >Matières</router-link
         >
       </div>
+       <div>
+        <span></span
+        ><router-link to="/ecole/handicap" active-class="active" class="header-part2-link5"
+          >Handicap</router-link
+        >
+      </div>
     </div>
     <div class="header-part3">
       <div class="header-part3-link1">Nom ecole</div>
