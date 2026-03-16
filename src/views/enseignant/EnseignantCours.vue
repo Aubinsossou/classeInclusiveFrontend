@@ -72,39 +72,31 @@ const mySubjects = computed(() => {
 const myClasse   = computed(() => userAuth.value?.classe ?? null)
 const hasClasse  = computed(() => !!myClasse.value)
 
-// ─────────────────────────────────────────────
-// HELPERS DATE
-// ─────────────────────────────────────────────
+
 function todayDatetimeLocal() {
-  // Retourne la date/heure actuelle au format datetime-local : "2026-03-11T14:30"
   const now = new Date()
   const pad = (n) => String(n).padStart(2, '0')
   return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`
 }
 
-// Convertit "2026-03-11T14:30" → "2026-03-11 14:30:00" pour Laravel
 function tolaravelDate(val) {
   if (!val) return null
   return val.replace('T', ' ') + ':00'
 }
 
-// ─────────────────────────────────────────────
-// FORM
-// ─────────────────────────────────────────────
+
 const form = reactive({
   title:              '',
   description:        '',
   matiere_id:         null,
   classe_id:          null,
   is_published:       false,
-  date_programmation: todayDatetimeLocal(),   // ← pré-rempli avec la date actuelle
+  date_programmation: todayDatetimeLocal(), 
 })
 
 
 
-// ─────────────────────────────────────────────
-// TIPTAP
-// ─────────────────────────────────────────────
+
 const editor = ref(null)
 
 const initEditor = (content = '') => {
@@ -120,16 +112,14 @@ const initEditor = (content = '') => {
   })
 }
 
-// ─────────────────────────────────────────────
-// MÉDIAS EXISTANTS
-// ─────────────────────────────────────────────
+
 const existingMedias = ref([])
 const deletingMedia  = ref(null)
 
 const deleteExistingMedia = async (media) => {
   deletingMedia.value = media.id
   try {
-    await apiDelete(`enseignant/cours/media/${media.id}`)
+    await apiDelete(`/enseignant/cours/media/${media.id}`)
     existingMedias.value = existingMedias.value.filter((m) => m.id !== media.id)
   } catch (e) {
     console.error('Erreur suppression média:', e)
@@ -138,9 +128,7 @@ const deleteExistingMedia = async (media) => {
   }
 }
 
-// ─────────────────────────────────────────────
-// UPLOAD NOUVEAUX MÉDIAS
-// ─────────────────────────────────────────────
+
 const newMedias = ref([])
 
 const ACCEPT_MAP = { video: 'video/*', image: 'image/*', audio: 'audio/*' }
@@ -176,9 +164,7 @@ function removeNewMedia(index) {
   newMedias.value.splice(index, 1)
 }
 
-// ─────────────────────────────────────────────
-// CHARGEMENT
-// ─────────────────────────────────────────────
+
 const loading = ref(true)
 const error   = ref(null)
 

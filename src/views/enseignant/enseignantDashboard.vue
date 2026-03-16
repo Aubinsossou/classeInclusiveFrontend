@@ -27,6 +27,7 @@ function dateActuelle() {
   return `${jour}/${mois}/${annee}`
 }
 
+
 onMounted(() => {
   loading.value = true
   apiGetEnseignantConnect()
@@ -36,7 +37,8 @@ onMounted(() => {
 
 <template>
   <LoadingView :visible="loading" :fullscreen="true" message="Chargement" offset-top="100px" />
-  <div v-if="loading == false">
+  <transition name="fade-slide">
+    <div v-if="loading == false">
     <section class="tableau-bord">
       <div class="container">
         <div class="tableau-bord-content">
@@ -383,6 +385,8 @@ onMounted(() => {
       </div>
     </section>
   </div>
+  </transition>
+
 </template>
 
 <style scoped>
@@ -393,6 +397,20 @@ onMounted(() => {
 }
 .tableau-bord-content {
   margin: 30px 0;
+}
+
+.fade-slide-enter-from {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.fade-slide-enter-active {
+  transition: all 1s ease-in-out;
+}
+
+.fade-slide-enter-to {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .tableau-bord-content-left {
@@ -423,10 +441,18 @@ onMounted(() => {
   border-bottom: 5px solid #d4e2ff;
   transition: ease-in-out 0.1s;
   background-color: white;
+   transition: all 0.25s ease;
+  cursor: pointer;
 }
+
+
 .stat-card-content-card-1:hover {
   border-left: 10px solid rgb(89, 89, 250);
   border-bottom: 5px solid #d4e2ff;
+
+  transform: translateY(-6px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+
 }
 .stat-card-content-card-1:hover::after {
   content: '';
@@ -473,6 +499,8 @@ onMounted(() => {
 .stat-card-content-card-2:hover {
   border-left: 10px solid #059669;
   border-bottom: 5px solid #d4e2ff;
+   transform: translateY(-6px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
 }
 .stat-card-content-card-2:hover::after {
   content: '';
@@ -497,6 +525,8 @@ onMounted(() => {
 .stat-card-content-card-3:hover {
   border-left: 10px solid #7c3aed;
   border-bottom: 5px solid #d4e2ff;
+   transform: translateY(-6px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
 }
 .stat-card-content-card-3:hover::after {
   content: '';
@@ -538,6 +568,8 @@ onMounted(() => {
 .stat-card-content-card-4:hover {
   border-left: 10px solid #d97706;
   border-bottom: 5px solid #d4e2ff;
+   transform: translateY(-6px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
 }
 .stat-card-content-card-4:hover::before {
   content: '';
@@ -554,6 +586,7 @@ onMounted(() => {
     opacity 0.3s ease;
   pointer-events: none;
 }
+
 /* Panels grid */
 
 .panels-grid-content {
