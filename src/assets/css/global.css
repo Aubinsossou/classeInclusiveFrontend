@@ -1,0 +1,26 @@
+/*General*/
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+a {
+  text-decoration: none;
+  
+}
+
+.container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+button{
+    border: none;
+}
+
+.tableau-bord-content-right {
+  display: flex;
+  align-items: center;
+}
