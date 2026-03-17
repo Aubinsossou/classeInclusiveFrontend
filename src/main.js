@@ -6,12 +6,15 @@ import '@/assets/css/main.css'
 
 import App from './App.vue'
 import router from './router'
+import VueViewer from 'v-viewer'
+import 'viewerjs/dist/viewer.css'
 
 const app = createApp(App)
 const pinia = createPinia()
 
 app.use(pinia)
 app.use(router)
+app.use(VueViewer)
 
 import('@/stores/theme').then(async ({ useThemeStore }) => {
   const themeStore = useThemeStore()

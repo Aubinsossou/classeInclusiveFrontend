@@ -19,7 +19,7 @@
           </defs>
         </svg>
       </div>
-      <span class="bt-brand">EduInclusif</span>
+      <span class="bt-brand">Classe inclusive</span>
       <span :class="['bt-mode-badge', supervisorMode ? 'bt-mode-badge--sv' : 'bt-mode-badge--vocal']">
         {{ supervisorMode ? '👁 Surveillant' : '🎙 Vocal' }}
       </span>
@@ -29,9 +29,8 @@
     <div class="bt-center">
       <div class="bt-pts">
         <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" class="bt-star"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-        <span class="bt-pts-val">{{ points.totalPoints }}</span>
         <span class="bt-sep">·</span>
-        <span class="bt-pts-level">{{ auth.user?.classe?.name || 'Ma classe' }}</span>
+        <span class="bt-pts-level">{{ eleve?.data?.classe?.name || 'Ma classe' }}</span>
       </div>
     </div>
 
@@ -39,8 +38,8 @@
     <div class="bt-right">
 
       <div class="bt-user" aria-label="Élève connecté">
-        <div class="bt-avatar" aria-hidden="true">{{ initials }}</div>
-        <span class="bt-username">{{ auth.user?.name }}</span>
+        <div class="bt-avatar" aria-hidden="true">{{ eleve?.data?.name?.charAt(0) }}</div>
+        <span class="bt-username">{{ eleve?.data?.name }}</span>
       </div>
 
       <!-- Toggle mode surveillant -->
@@ -60,7 +59,7 @@
       </button>
 
       <!-- Déconnexion — toujours en dernier -->
-      <button class="bt-btn bt-btn--logout" @click="$emit('logout')" type="button" aria-label="Se déconnecter">
+      <button class="bt-btn bt-btn--logout" @click.prevent="handleLogout" type="button" aria-label="Se déconnecter">
         <svg viewBox="0 0 24 24" fill="none" width="22" height="22">
           <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
         </svg>
@@ -72,19 +71,39 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import { useAuthStore }   from '@/stores/auth'
-import { usePointsStore } from '@/stores/points'
+import { computed,ref, onMounted } from 'vue'
+import { apiPost,apiGet,apiDelete } from '@/helpers/axiosApi'
+import { useRouter } from 'vue-router'
+const eleve = ref()
+const error = ref('')
 
-defineProps({ supervisorMode: { type: Boolean, default: false } })
-defineEmits(['toggle-supervisor', 'logout'])
+const router = useRouter()
 
-const auth   = useAuthStore()
-const points = usePointsStore()
+async function loadData() {
+  error.value = ''
+    const response = await apiGet('eleve/getEleve')
+    eleve.value =  response.data
+    console.log('eleve.value: ', eleve.value); 
+}
 
-const initials = computed(() =>
-  (auth.user?.name || '').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
-)
+
+async function handleLogout() {
+  try {
+    await apiPost('eleve/logout')
+  } catch {}
+  localStorage.removeItem('access_token')
+  localStorage.removeItem('role')
+  localStorage.removeItem('eleve')
+  router.push("/eleve/login")
+}
+
+
+
+
+onMounted(async()=>{
+  await loadData()
+})
+
 </script>
 
 <style scoped>

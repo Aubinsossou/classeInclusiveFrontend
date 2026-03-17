@@ -1,3 +1,43 @@
+
+<script setup>
+import { computed,ref, onMounted } from 'vue'
+import { apiPost,apiGet,apiDelete } from '@/helpers/axiosApi'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+const eleve = ref()
+const error = ref('')
+
+async function loadData() {
+  error.value = ''
+    const response = await apiGet('eleve/getEleve')
+    eleve.value =  response.data
+    console.log('eleve.value: ', eleve.value); 
+}
+
+
+async function handleLogout() {
+  try {
+    await apiPost('eleve/logout')
+  } catch {}
+  localStorage.removeItem('access_token')
+  localStorage.removeItem('role')
+  localStorage.removeItem('eleve')
+  router.push("/eleve/login")
+}
+
+
+defineProps({ pageTitle: { type: String, default: '' } })
+
+
+onMounted(async()=>{
+  await loadData()
+})
+
+</script>
+
+
+
 <!-- ═══════════════════════════════════════════════════════════
      AppTopbar.vue — boutons grands pour enfants
 ═══════════════════════════════════════════════════════════ -->
@@ -19,7 +59,7 @@
           </defs>
         </svg>
       </div>
-      <span class="at-brand">EduInclusif</span>
+      <span class="at-brand">Classe inclusive</span>
       <span v-if="pageTitle" class="at-sep" aria-hidden="true">/</span>
       <span v-if="pageTitle" class="at-page">{{ pageTitle }}</span>
     </div>
@@ -28,46 +68,29 @@
     <div class="at-center">
       <div class="at-pts">
         <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" class="at-star"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-        <span class="at-pts-val">{{ points.totalPoints }}</span>
         <span class="at-sep2">·</span>
-        <span class="at-pts-level">{{ auth.user?.classe?.name || 'Ma classe' }}</span>
+        <span class="at-pts-level">{{ eleve?.data?.classe?.name }}</span>
       </div>
     </div>
 
     <!-- DROITE : User | Thème | Déconnexion -->
     <div class="at-right">
 
-      <div class="at-user" aria-label="Élève connecté">
-        <div class="at-avatar" aria-hidden="true">{{ initials }}</div>
-        <span class="at-username">{{ auth.user?.name }}</span>
+      <div class="at-user" aria-label="Élève connecté" >
+        <div class="at-avatar" >{{ eleve?.data?.name?.charAt(0) }}</div>
+        <span class="at-username">{{ eleve?.data?.name}}</span>
       </div>
 
       <button class="at-btn at-btn--logout" @click="$emit('logout')" type="button" aria-label="Se déconnecter">
         <svg viewBox="0 0 24 24" fill="none" width="22" height="22">
           <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
         </svg>
-        <span class="at-btn-label">Quitter</span>
+        <span class="at-btn-label" @click="handleLogout">Quitter</span>
       </button>
     </div>
 
   </header>
 </template>
-
-<script setup>
-import { computed } from 'vue'
-import { useAuthStore }   from '@/stores/auth'
-import { usePointsStore } from '@/stores/points'
-
-defineProps({ pageTitle: { type: String, default: '' } })
-defineEmits(['logout'])
-
-const auth   = useAuthStore()
-const points = usePointsStore()
-
-const initials = computed(() =>
-  (auth.user?.name || '').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
-)
-</script>
 
 <style scoped>
 
