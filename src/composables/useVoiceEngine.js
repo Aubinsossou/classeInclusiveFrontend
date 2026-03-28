@@ -151,22 +151,16 @@ function listen(commandMap, timeout = 9000) {
           }
         }
       }
+      // ← CHANGEMENT : si rien compris, retourner transcript sans action
       finish({ transcript: candidates[0], action: null })
     }
 
-    recog.onerror = (e) => {
-      // "no-speech" = timeout naturel, pas une erreur critique
-      finish(null)
-    }
+    recog.onerror = () => finish(null)
+    recog.onend   = () => finish(null)
 
-    recog.onend = () => finish(null)
-
-    try { recog.start() } catch {
-      finish(null)
-    }
+    try { recog.start() } catch { finish(null) }
   })
 }
-
 // ─────────────────────────────────────────────────────────
 //  ANNOUNCE — parle puis écoute
 // ─────────────────────────────────────────────────────────

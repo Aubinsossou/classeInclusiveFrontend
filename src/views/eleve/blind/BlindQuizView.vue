@@ -26,9 +26,10 @@ async function loadData() {
 
 const supervisorMode = ref(false)
 
-function toggleSupervisor() {
+
+const toggleSupervisor =()=>{
   supervisorMode.value = !supervisorMode.value
-  voice.stop()
+  voice.stop() 
 }
 
 const apiCours = computed(() =>
@@ -72,16 +73,22 @@ async function lancerQuiz() {
     goBack()
     return
   }
+
   while (true) {
-    if (quizEnded.value) return
+    if (quizEnded.value || supervisorMode.value) return
+
     const q    = questions.value[currentIndex.value]
     const opts = q.options.map((o, i) => `${['A','B','C','D'][i]} : ${o}`).join('. ')
-    await voice.speak(`Question ${currentIndex.value + 1} sur ${questions.value.length}. ${q.text}. ${opts}. Dites A, B, C ou D.`)
-    await delay(700)
 
+    // Lire la question
+    await voice.speak(`Question ${currentIndex.value + 1} sur ${questions.value.length}. ${q.text}. ${opts}. Dites A, B, C ou D.`)
+    if (supervisorMode.value) return
+
+    // Attendre la réponse — boucle infinie jusqu'à réponse valide
     let answerIndex = null
     while (answerIndex === null) {
-      if (quizEnded.value) return
+      if (supervisorMode.value) return
+
       const result = await voice.listen({
         'a|alpha':         'a',
         'b|bé|beta':       'b',
@@ -89,16 +96,18 @@ async function lancerQuiz() {
         'd|dé|delta':      'd',
         'repete|répète':   'repete',
         'quitter|stop':    'quitter',
-      }, 10000)
+      }, 12000)
+
+      if (supervisorMode.value) return
 
       const cmd = result?.action
       if (cmd === 'a') { answerIndex = 0; break }
       if (cmd === 'b') { answerIndex = 1; break }
       if (cmd === 'c') { answerIndex = 2; break }
       if (cmd === 'd') { answerIndex = 3; break }
+
       if (cmd === 'repete') {
-        await voice.speak(`${q.text}. ${opts}`)
-        await delay(700)
+        await voice.speak(`${q.text}. ${opts}. Dites A, B, C ou D.`)
         continue
       }
       if (cmd === 'quitter') {
@@ -108,11 +117,14 @@ async function lancerQuiz() {
         await voice.speak(`${q.text}. ${opts}. Dites A, B, C ou D.`)
         continue
       }
-      await voice.speak(`Je n'ai pas compris. Dites A, B, C ou D.`)
-      await delay(700)
+
+      // Rien compris ou timeout → répéter la question sans avancer
+       if (!cmd) continue 
     }
 
     if (answerIndex === null) continue
+
+    // Enregistrer la réponse
     const correct = answerIndex === q.correctIndex
     answers.value[currentIndex.value] = answerIndex
 
@@ -120,17 +132,36 @@ async function lancerQuiz() {
       ? `Bonne réponse !`
       : `Mauvaise réponse. La bonne réponse était ${['A','B','C','D'][q.correctIndex]} : ${q.options[q.correctIndex]}.`
     await voice.speak(feedback)
-    await delay(500)
+    if (supervisorMode.value) return
 
+    // Dernière question → terminer
     if (currentIndex.value === questions.value.length - 1) {
       await terminerQuiz()
       return
     }
 
-    await voice.speak('Dites suite pour continuer.')
-    await delay(700)
-    const nav = await voice.listen({ 'suite|oui|continuer|suivant': 'suite', 'repete|répète': 'repete' }, 8000)
-    if (nav?.action === 'repete') continue
+    // Attendre confirmation avant question suivante
+    await voice.speak('Dites suite pour la question suivante.')
+    if (supervisorMode.value) return
+
+    let navDone = false
+    while (!navDone) {
+      if (supervisorMode.value) return
+      const nav = await voice.listen({
+        'suite|oui|continuer|suivant': 'suite',
+        'repete|répète':               'repete',
+      }, 15000)
+      if (supervisorMode.value) return
+
+      if (nav?.action === 'suite') { navDone = true }
+      else if (nav?.action === 'repete') {
+        await voice.speak(`${q.text}. ${opts}. Vous avez répondu ${['A','B','C','D'][answerIndex]}. ${feedback}`)
+      } else {
+        // Timeout ou non compris → redemander
+        await voice.speak('Dites suite pour continuer.')
+      }
+    }
+
     currentIndex.value++
   }
 }
@@ -182,7 +213,9 @@ async function handleLogout() {
 onMounted(async () => {
   voice.reset()
   await loadData()
-  if (!supervisorMode.value) setTimeout(lancerQuiz, 600)
+  // Attendre que les computed soient résolus
+  await new Promise(r => setTimeout(r, 300))
+  if (!supervisorMode.value) lancerQuiz()
 })
 onUnmounted(() => voice.stop())
 </script>
@@ -266,7 +299,7 @@ onUnmounted(() => voice.stop())
         </div>
 
         <div class="panel-actions">
-          <button v-if="!supervisorMode" class="pa-btn pa-btn--repeat" @click="lancerQuiz" type="button">Répéter</button>
+          <button v-if="!supervisorMode" class="pa-btn pa-btn--repeat" @click="() => { voice.stop(); voice.reset(); lancerQuiz() }" type="button">Répéter</button>
           <button class="pa-btn pa-btn--quit" @click="goBack" type="button">Quitter</button>
         </div>
       </aside>

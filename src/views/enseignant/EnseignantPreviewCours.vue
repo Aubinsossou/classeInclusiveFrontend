@@ -106,10 +106,18 @@ function getMatiereName(matiere_id) {
   return mySubjects.value.find(m => m.id === matiere_id)?.name ?? '—'
 }
 
+const BASE_URL = import.meta.env.VITE_API_URL?.replace('/api/v1', '') || 'http://localhost:8000'
+function fullUrl(url) {
+  if (!url) return ''
+  if (url.startsWith('http')) return url
+  return BASE_URL + url
+}
+
 // Retourne uniquement une image comme thumbnail, jamais une vidéo
 function getThumbnail(c) {
   if (!c.medias?.length) return null
-  return c.medias.find(m => m.type === 'image')?.url ?? null
+  const img = c.medias.find(m => m.type === 'image')
+  return img ? fullUrl(img.url) : null
 }
 
 function hasVideo(c) {
