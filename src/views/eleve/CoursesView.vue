@@ -44,13 +44,25 @@ const currentMatiere = computed(() => {
 const courses = computed(() =>
   allCours.value
     .filter(c => String(c.matiere_id) === sid || String(c.matiere?.id) === sid)
-    .map(c => ({
-      id:      c.id,
-      title:   c.title || c.titre || 'Cours',
-      locked:  false,
-      medias:  c.medias  || [],
-      quizzes: c.quizzes || [],
-    }))
+    .map(c => {
+      // materiels / strategies peuvent arriver comme tableau ou comme JSON string
+      const parseListe = (v) => {
+        if (Array.isArray(v)) return v.filter(Boolean)
+        if (typeof v === 'string' && v.trim().startsWith('[')) {
+          try { return JSON.parse(v).filter(Boolean) } catch { return [] }
+        }
+        return []
+      }
+      return {
+        id:        c.id,
+        title:     c.title || c.titre || 'Cours',
+        locked:    false,
+        medias:    c.medias    || [],
+        quizzes:   c.quizzes   || [],
+        materiels:  parseListe(c.materiel  ?? c.materiels),
+        strategies: parseListe(c.strategie ?? c.strategies),
+      }
+    })
 )
 
 function goTo(lessonId) {
@@ -132,6 +144,32 @@ onMounted(loadData)
                     Quiz
                   </span>
                 </div>
+ 
+                <!-- ── Matériel nécessaire ── -->
+                <div v-if="course.materiels.length" class="course-extra" @click.stop>
+                  <p class="extra-label">
+                    <svg viewBox="0 0 24 24" fill="none" width="12" height="12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+                    </svg>
+                    Matériel nécessaire
+                  </p>
+                  <ul class="extra-list">
+                    <li v-for="(item, idx) in course.materiels" :key="idx" class="extra-item">{{ item }}</li>
+                  </ul>
+                </div>
+ 
+                <!-- ── Stratégie d'utilisation ── -->
+                <div v-if="course.strategies.length" class="course-extra course-extra--strategy" @click.stop>
+                  <p class="extra-label extra-label--strategy">
+                    <svg viewBox="0 0 24 24" fill="none" width="12" height="12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
+                    </svg>
+                    Stratégie d'utilisation
+                  </p>
+                  <ol class="extra-list extra-list--ol">
+                    <li v-for="(item, idx) in course.strategies" :key="idx" class="extra-item">{{ item }}</li>
+                  </ol>
+                </div>
               </div>
 
               <div class="course-action" aria-hidden="true">
@@ -193,4 +231,42 @@ onMounted(loadData)
 .course-card:hover .action-arrow { transform:translateX(3px); }
 .empty-state { text-align:center;padding:60px 0;color:#6B5E4E;font-size:.9rem; }
 @media(max-width:640px) { .page-body{padding:20px 14px 40px;} .course-card{padding:16px;gap:12px;} .header-inner{padding:14px 16px;} }
+/* ── Matériel & Stratégie ─────────────────────────────────────── */
+.course-extra {
+  margin-top: 10px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  background: rgba(120,100,80,0.04);
+  border: 1px solid rgba(120,100,80,0.12);
+}
+.course-extra--strategy {
+  background: rgba(79,70,229,0.04);
+  border-color: rgba(79,70,229,0.15);
+}
+.extra-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0 0 6px;
+  font-size: .68rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: #6B5E4E;
+}
+.extra-label--strategy { color: #4338CA; }
+.extra-list {
+  margin: 0;
+  padding-left: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  list-style: disc;
+}
+.extra-list--ol { list-style: decimal; }
+.extra-item {
+  font-size: .78rem;
+  color: #5C4E3E;
+  line-height: 1.55;
+}
 </style>
