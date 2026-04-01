@@ -138,7 +138,7 @@ const router = createRouter({
 
 export default router
 
-router.beforeEach((to) => {
+ router.beforeEach((to) => {
   stopVoice()
 
   const token = localStorage.getItem('access_token')
@@ -168,4 +168,4 @@ router.beforeEach((to) => {
     if (role === 'enseignant') return { name: 'enseignantDashboard' }
     if (role === 'eleve')      return { name: 'Dashboard' }
   }
-})
+}) 

@@ -94,7 +94,30 @@ const form = reactive({
   date_programmation: todayDatetimeLocal(), 
 })
 
-
+// ─────────────────────────────────────────────
+// LISTES DYNAMIQUES
+// ─────────────────────────────────────────────
+const materielItems  = ref([''])
+const strategieItems = ref([''])
+ 
+function onDynamicInput(listRef, index) {
+  // Si on tape dans la dernière ligne → ajouter une nouvelle ligne vide
+  if (index === listRef.value.length - 1 && listRef.value[index].trim() !== '') {
+    listRef.value.push('')
+  }
+}
+ 
+function removeDynamicItem(listRef, index) {
+  listRef.value.splice(index, 1)
+  // Garantir au moins une ligne vide à la fin
+  if (listRef.value.length === 0 || listRef.value[listRef.value.length - 1].trim() !== '') {
+    listRef.value.push('')
+  }
+}
+ 
+function isLastEmptyItem(listRef, index) {
+  return index === listRef.value.length - 1 && listRef.value[index].trim() === ''
+}
 
 
 const editor = ref(null)
@@ -192,6 +215,15 @@ onMounted(async () => {
         ? data.date_programmation.substring(0, 16).replace(' ', 'T')
         : todayDatetimeLocal()
       existingMedias.value    = data.medias ?? []
+
+      // Recharger les listes dynamiques en mode édition
+        if (Array.isArray(data.materiel) && data.materiel.length) {
+          materielItems.value = [...data.materiel, '']
+        }
+        if (Array.isArray(data.strategie) && data.strategie.length) {
+          strategieItems.value = [...data.strategie, '']
+        }
+      
       initEditor(data.contenu ?? '')
     } else {
       initEditor('')
@@ -237,6 +269,8 @@ const submitForm = async (publish = null) => {
       fd.append('classe_id',          form.classe_id)
       fd.append('is_published',       isPublished ? 1 : 0)
       fd.append('date_programmation', tolaravelDate(form.date_programmation) ?? '')
+      fd.append('materiel',  JSON.stringify(materielItems.value.filter(i => i.trim() !== '')))
+      fd.append('strategie', JSON.stringify(strategieItems.value.filter(i => i.trim() !== '')))
       newMedias.value.forEach((m, i) => {
         fd.append(`medias_files[${i}]`,  m.file)
         fd.append(`medias_types[${i}]`,  m.type)
@@ -252,6 +286,8 @@ const submitForm = async (publish = null) => {
         classe_id:          form.classe_id,
         is_published:       isPublished ? 1 : 0,
         date_programmation: tolaravelDate(form.date_programmation),
+        materiel:  materielItems.value.filter(i => i.trim() !== ''),
+        strategie: strategieItems.value.filter(i => i.trim() !== ''),
       })
     }
 
@@ -413,9 +449,68 @@ function mediaBg(type)    { return { video: '#dbeafe', image: '#d1fae5', audio: 
               </label>
             </div>
           </section>
-        </div>
 
-        <!-- ── COLONNE LATÉRALE ── -->
+          <!-- Matériel nécessaire -->
+          <section class="cfv-card">
+            <h2 class="cfv-section-title">Matériel nécessaire</h2>
+            <p class="cfv-section-sub">Listez les ressources dont les élèves ont besoin (stylo, cahier, règle…).</p>
+            <div class="dynlist">
+              <div
+                v-for="(item, index) in materielItems"
+                :key="index"
+                class="dynlist-row"
+              >
+                <input
+                  v-model="materielItems[index]"
+                  class="pro-input dynlist-input"
+                  placeholder="Ex : Cahier de brouillon"
+                  @input="onDynamicInput(materielItems, index)"
+                />
+                <button
+                  v-if="!isLastEmptyItem(materielItems, index)"
+                  class="dynlist-del"
+                  type="button"
+                  @click="removeDynamicItem(materielItems, index)"
+                  title="Supprimer"
+                >
+                  <AppIcon name="x" :size="13" />
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <!-- Stratégie d'utilisation -->
+          <section class="cfv-card">
+            <h2 class="cfv-section-title">Stratégie d'utilisation</h2>
+            <p class="cfv-section-sub">Décrivez étape par étape comment exploiter ce cours en classe.</p>
+            <div class="dynlist">
+              <div
+                v-for="(item, index) in strategieItems"
+                :key="index"
+                class="dynlist-row"
+              >
+                <input
+                  v-model="strategieItems[index]"
+                  class="pro-input dynlist-input"
+                  placeholder="Ex : Commencer par une mise en situation"
+                  @input="onDynamicInput(strategieItems, index)"
+                />
+                <button
+                  v-if="!isLastEmptyItem(strategieItems, index)"
+                  class="dynlist-del"
+                  type="button"
+                  @click="removeDynamicItem(strategieItems, index)"
+                  title="Supprimer"
+                >
+                  <AppIcon name="x" :size="13" />
+                </button>
+              </div>
+            </div>
+          </section>
+          
+        </div>
+          
+          <!-- ── COLONNE LATÉRALE ── -->
         <aside class="cfv-aside">
 
           <!-- Paramètres -->
@@ -669,4 +764,22 @@ function mediaBg(type)    { return { video: '#dbeafe', image: '#d1fae5', audio: 
 .ms-icon { width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
 
 .cfv-error-box { display:flex;flex-direction:column;align-items:center;gap:12px;padding:48px;text-align:center;color:var(--pro-red); }
+
+/* ── LISTES DYNAMIQUES ── */
+.dynlist { display:flex;flex-direction:column;gap:7px; }
+.dynlist-row { display:flex;align-items:center;gap:8px; }
+.dynlist-input { flex:1;margin:0; }
+.dynlist-del {
+  flex-shrink:0;
+  width:30px;height:30px;
+  border-radius:7px;
+  border:1.5px solid var(--pro-border);
+  background:white;
+  color:var(--pro-muted);
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .15s;
+  padding:0;
+}
+.dynlist-del:hover { background:var(--pro-red-soft);color:var(--pro-red);border-color:#fecaca; }
 </style>
