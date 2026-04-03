@@ -86,6 +86,9 @@ const lesson = ref({ title: '', content: [], rawHtml: '' })
 const fs = ref(16)
 const hiContrast = ref(false)
 
+const materiels = ref([{name:'fgtctrctctcf',id:4},{name:'fgtctrctctcf',id:4}])
+const strategies = ref([{name:'fgtctrctctcf',id:4},{name:'fgtctrctctcf',id:4}])
+
 function chargerCours(c) {
   if (!c) return
   lesson.value.title = c.title || c.titre || 'Cours'
@@ -518,6 +521,34 @@ onUnmounted(() => {
             Ce cours n'a pas encore de contenu textuel.
           </p>
         </article>
+      </section>
+
+      <section>
+        <!-- ── Matériel nécessaire ── -->
+                <div v-if="materiels" class="course-extra" @click.stop>
+                  <p class="extra-label">
+                    <svg viewBox="0 0 24 24" fill="none" width="12" height="12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+                    </svg>
+                    Matériel nécessaire
+                  </p>
+                  <ul class="extra-list">
+                    <li v-for="item, in materiels" key="" class="extra-item">{{ item.name }}</li>
+                  </ul>
+                </div>
+ 
+                <!-- ── Stratégie d'utilisation ── -->
+                <div  class="course-extra course-extra--strategy" @click.stop>
+                  <p class="extra-label extra-label--strategy">
+                    <svg viewBox="0 0 24 24" fill="none" width="12" height="12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
+                    </svg>
+                    Stratégie d'utilisation
+                  </p>
+                  <ol class="extra-list extra-list--ol">
+                    <li v-for="item in strategies" key="" class="extra-item">{{ item.name }}</li>
+                  </ol>
+                </div>
       </section>
 
       <!-- CTA Quiz -->
@@ -1116,5 +1147,43 @@ onUnmounted(() => {
     width: 100%;
     justify-content: center;
   }
+}
+/* ── Matériel & Stratégie ─────────────────────────────────────── */
+.course-extra {
+  margin-top: 10px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  background: rgba(120,100,80,0.04);
+  border: 1px solid rgba(120,100,80,0.12);
+}
+.course-extra--strategy {
+  background: rgba(79,70,229,0.04);
+  border-color: rgba(79,70,229,0.15);
+}
+.extra-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0 0 6px;
+  font-size: .68rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: #6B5E4E;
+}
+.extra-label--strategy { color: #4338CA; }
+.extra-list {
+  margin: 0;
+  padding-left: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  list-style: disc;
+}
+.extra-list--ol { list-style: decimal; }
+.extra-item {
+  font-size: .78rem;
+  color: #5C4E3E;
+  line-height: 1.55;
 }
 </style>

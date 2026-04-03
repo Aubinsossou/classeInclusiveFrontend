@@ -102,21 +102,21 @@ const strategieItems = ref([''])
  
 function onDynamicInput(listRef, index) {
   // Si on tape dans la dernière ligne → ajouter une nouvelle ligne vide
-  if (index === listRef.value.length - 1 && listRef.value[index].trim() !== '') {
-    listRef.value.push('')
+  if (index === listRef.length - 1 && listRef[index].trim() !== '') {
+    listRef.push('')
   }
 }
  
 function removeDynamicItem(listRef, index) {
-  listRef.value.splice(index, 1)
+  listRef.splice(index, 1)
   // Garantir au moins une ligne vide à la fin
-  if (listRef.value.length === 0 || listRef.value[listRef.value.length - 1].trim() !== '') {
+  if (listRef.length === 0 || listRef.value[listRef.length - 1].trim() !== '') {
     listRef.value.push('')
   }
 }
  
 function isLastEmptyItem(listRef, index) {
-  return index === listRef.value.length - 1 && listRef.value[index].trim() === ''
+  return index === listRef.length - 1 && listRef[index].trim() === ''
 }
 
 
@@ -489,12 +489,13 @@ function mediaBg(type)    { return { video: '#dbeafe', image: '#d1fae5', audio: 
                 :key="index"
                 class="dynlist-row"
               >
-                <input
+                <textarea
                   v-model="strategieItems[index]"
-                  class="pro-input dynlist-input"
+                  class="pro-input dynlist-input textarea-auto"
                   placeholder="Ex : Commencer par une mise en situation"
+                  rows="2"
                   @input="onDynamicInput(strategieItems, index)"
-                />
+                ></textarea>
                 <button
                   v-if="!isLastEmptyItem(strategieItems, index)"
                   class="dynlist-del"
@@ -766,20 +767,60 @@ function mediaBg(type)    { return { video: '#dbeafe', image: '#d1fae5', audio: 
 .cfv-error-box { display:flex;flex-direction:column;align-items:center;gap:12px;padding:48px;text-align:center;color:var(--pro-red); }
 
 /* ── LISTES DYNAMIQUES ── */
-.dynlist { display:flex;flex-direction:column;gap:7px; }
-.dynlist-row { display:flex;align-items:center;gap:8px; }
-.dynlist-input { flex:1;margin:0; }
-.dynlist-del {
-  flex-shrink:0;
-  width:30px;height:30px;
-  border-radius:7px;
-  border:1.5px solid var(--pro-border);
-  background:white;
-  color:var(--pro-muted);
-  cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-  transition:all .15s;
-  padding:0;
+.dynlist { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 8px; 
 }
-.dynlist-del:hover { background:var(--pro-red-soft);color:var(--pro-red);border-color:#fecaca; }
+
+.dynlist-row { 
+  display: flex; 
+  /* "flex-start" est crucial ici pour que le bouton 'x' reste en haut 
+     même quand le textarea s'agrandit */
+  align-items: flex-start; 
+  gap: 8px; 
+}
+
+.dynlist-input { 
+  flex: 1; 
+  margin: 0;
+  /* On garde un padding uniforme pour l'input et le textarea */
+  padding: 8px 12px;
+  border: 1.5px solid var(--pro-border);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+/* Style spécifique pour les zones de texte de la stratégie */
+textarea.dynlist-input {
+  min-height: 60px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.dynlist-del {
+  flex-shrink: 0;
+  /* On s'assure que le bouton a une taille fixe */
+  width: 32px; 
+  height: 32px;
+  /* Un petit décalage pour que le bouton soit aligné avec la première ligne de texte */
+  margin-top: 2px; 
+  border-radius: 7px;
+  border: 1.5px solid var(--pro-border);
+  background: white;
+  color: var(--pro-muted);
+  cursor: pointer;
+  display: flex; 
+  align-items: center; 
+  justify-content: center;
+  transition: all .15s;
+}
+
+.dynlist-del:hover { 
+  background: var(--pro-red-soft); 
+  color: var(--pro-red); 
+  border-color: #fecaca; 
+}
 </style>
