@@ -8,6 +8,10 @@ import AppTopbar from '@/components/eleve/AppTopbar.vue'
 const router = useRouter()
 const route = useRoute()
 const voice = useVoiceEngine()
+const showResume = ref(false)
+const showStrategies = ref(false)
+route.params
+console.log('router.params: ', route.params)
 
 const subjectId = route.params.subjectId
 const lessonId = String(route.params.lessonId)
@@ -18,14 +22,18 @@ const loading = ref(true)
 async function loadData() {
   try {
     const response = await apiGet('eleve/getEleve')
-    eleve.value = response.data?.data || response.data
     localStorage.setItem('eleve', JSON.stringify(eleve.value))
+    eleve.value = response.data?.data || response.data
+    console.log('eleve.value: ', eleve.value)
   } catch (e) {
     console.error(e)
   } finally {
     loading.value = false
   }
 }
+const resume = computed(() => apiCours.value?.resume || '')
+const materiels = computed(() => apiCours.value?.materiels || [])
+const strategies = computed(() => apiCours.value?.strategies || [])
 
 const handicapId = computed(() => eleve.value?.handicap?.id ?? 1)
 const isBlind = computed(() => handicapId.value === 2)
@@ -39,16 +47,20 @@ const apiCours = computed(() =>
 const pageTitle = computed(() => apiCours.value?.title || apiCours.value?.titre || 'Leçon')
 const courseMedias = computed(() => apiCours.value?.medias || [])
 
+// ── URL helpers — définis AVANT les computed qui les utilisent ──
 const BASE_URL = import.meta.env.VITE_API_URL?.replace('/api/v1', '') || 'http://localhost:8000'
-function fullUrl(url) {
+
+const fullUrl = (url) => {
   if (!url) return ''
   if (url.startsWith('http')) return url
   return BASE_URL + url
 }
 
-const videoUrl = computed(() =>
-  fullUrl(courseMedias.value?.find((m) => m.type === 'video')?.url || ''),
-)
+// ── Médias ────────────────────────────────────────────────
+const videoUrl = computed(() => {
+  const media = courseMedias.value.find((m) => m.type === 'video')
+  return media ? fullUrl(media.url) : ''
+})
 const audioUrl = computed(() =>
   fullUrl(courseMedias.value.find((m) => m.type === 'audio')?.url || ''),
 )
@@ -61,7 +73,7 @@ const hasAudio = computed(() => !!audioUrl.value && !isDeaf.value)
 const hasImages = computed(() => !isBlind.value && lessonImages.value.length > 0)
 
 // ── Contenu texte ─────────────────────────────────────────
-function htmlToBlocks(html) {
+const htmlToBlocks = (html) => {
   if (!html) return []
   const div = document.createElement('div')
   div.innerHTML = html
@@ -84,9 +96,8 @@ function htmlToBlocks(html) {
 
 const lesson = ref({ title: '', content: [], rawHtml: '' })
 const fs = ref(16)
-const hiContrast = ref(false)
 
-function chargerCours(c) {
+const chargerCours = (c) => {
   if (!c) return
   lesson.value.title = c.title || c.titre || 'Cours'
   lesson.value.rawHtml = c.contenu || ''
@@ -102,29 +113,55 @@ watch(
   { immediate: true },
 )
 
-// ── TTS ───────────────────────────────────────────────────
+// ── Quiz
+const quizVisible = computed(
+  () => apiCours.value?.quizzes?.length > 0 && apiCours.value?.quiz_authorise === true,
+)
+
 const isTtsPlaying = ref(false)
 
-function getPlainText() {
-  const div = document.createElement('div')
-  div.innerHTML = lesson.value.rawHtml || ''
-  return div.textContent?.trim() || lesson.value.title
-}
+const getPlainText = () => {
+  // 1. Priorité : extraire le texte brut depuis le HTML du cours
+  if (lesson.value.rawHtml) {
+    const div = document.createElement('div')
+    div.innerHTML = lesson.value.rawHtml
+    const text = div.textContent?.trim()
+    if (text) return text
+  }
 
-async function toggleTts() {
+  // 2. Fallback : reconstruire depuis les blocs parsés
+  if (lesson.value.content?.length) {
+    return lesson.value.content
+      .map((block) => {
+        if (block.type === 'list') return block.items.join('. ')
+        return block.text || ''
+      })
+      .filter(Boolean)
+      .join(' ')
+  }
+
+  return ''
+}
+const toggleTts = async () => {
   if (isTtsPlaying.value) {
     voice.stop()
     isTtsPlaying.value = false
     return
   }
+
   const text = getPlainText()
-  if (!text) return
+
+  if (!text) {
+    console.warn('Pas de texte trouvé !')
+    return
+  }
+
   isTtsPlaying.value = true
-  await voice.speak(text)
+  try {
+    await voice.speak(text)
+  } catch (e) {}
   isTtsPlaying.value = false
 }
-
-// ── Audio natif ───────────────────────────────────────────
 const audioEl = ref(null)
 const isPlaying = ref(false)
 const currentTime = ref(0)
@@ -132,60 +169,50 @@ const duration = ref(0)
 const rate = ref(1)
 const audioPct = computed(() => (duration.value ? (currentTime.value / duration.value) * 100 : 0))
 
-function togglePlay() {
+const togglePlay = () => {
   if (!audioEl.value) return
   if (isPlaying.value) audioEl.value.pause()
   else audioEl.value.play()
   isPlaying.value = !isPlaying.value
 }
-function skip(s) {
+const skip = (s) => {
   if (!audioEl.value) return
   audioEl.value.currentTime = Math.max(0, Math.min(duration.value, audioEl.value.currentTime + s))
 }
-function seek(e) {
+const seek = (e) => {
   if (!audioEl.value) return
   const r = e.currentTarget.getBoundingClientRect()
   audioEl.value.currentTime = ((e.clientX - r.left) / r.width) * duration.value
 }
-function cycleRate() {
+const cycleRate = () => {
   const rates = [0.75, 1, 1.25, 1.5, 2]
   rate.value = rates[(rates.indexOf(rate.value) + 1) % rates.length]
   if (audioEl.value) audioEl.value.playbackRate = rate.value
 }
-function onTimeUpdate() {
+const onTimeUpdate = () => {
   if (audioEl.value) currentTime.value = audioEl.value.currentTime
 }
-function onLoaded() {
+const onLoaded = () => {
   if (audioEl.value) duration.value = audioEl.value.duration
 }
-function fmt(s) {
+const fmt = (s) => {
   if (!s || isNaN(s)) return '0:00'
   return `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`
 }
 
-// ── Vidéo native ──────────────────────────────────────────
-const ableVideoId = `able-video-${lessonId}`
-
-async function initAblePlayer() {
-  if (!videoUrl.value || typeof window.AblePlayer === 'undefined') return
-  await nextTick()
-  try {
-    if (window.$) new window.AblePlayer(window.$(`#${ableVideoId}`))
-  } catch (e) {
-    console.warn('[AblePlayer]', e)
-  }
-}
-
-// ── Navigation ────────────────────────────────────────────
-function goBack() {
-  router.push({ name: 'Courses', params: { subjectId } })
-}
-function goToQuiz() {
+const goBack = () => router.push({ name: 'Courses', params: { subjectId } })
+const goToQuiz = () =>
   router.push({ name: isBlind.value ? 'BlindQuiz' : 'Quiz', params: { subjectId, lessonId } })
+const goToRetour = () => {
+  isFormVisible.value = true
 }
+const eleveConnect = ref()
 
-async function handleLogout() {
+const handleLogout = async () => {
   try {
+    const response = apiGet('eleve/connexion')
+    eleveConnect.value = response
+    console.log('eleveConnect.value: ', eleveConnect.value)
     await apiPost('eleve/logout')
   } catch {}
   localStorage.removeItem('access_token')
@@ -194,21 +221,62 @@ async function handleLogout() {
   router.push({ name: 'EleveLogin' })
 }
 
+// État réactif pour gérer la visibilité du formulaire de retour et projection
+const isFormVisible = ref(false)
+
+// État pour stocker les réponses du formulaire
+const formBilan = ref({
+  appris: '',
+  comment: '',
+  difficultes: '',
+  action: '',
+})
+
+// Fonction de validation et d'envoi
+const submitBilan = async () => {
+  // Vérification : on s'assure qu'au moins un champ n'est pas vide
+  if (!formBilan.value.appris.trim() || !formBilan.value.action.trim()) {
+    alert("S'il te plaît, remplis au moins ce que tu as appris et ce que tu comptes en faire.")
+    return
+  }
+
+  // Logique d'envoi (ex: appel API vers Laravel)
+  console.log('Bilan envoyé :', { ...formBilan.value })
+
+  try {
+    const response = await apiPost('eleve/retour-projection/store', {
+      apprentissage: formBilan.value.appris,
+      methode_apprentissage: formBilan.value.comment,
+      difficultes: formBilan.value.difficultes,
+      application_future: formBilan.value.action,
+      eleve_id: eleve.value?.id,
+      cours_id: route.params.lessonId,
+    })
+    eleve.value = response.data?.data || response.data
+    localStorage.setItem('eleve', JSON.stringify(eleve.value))
+  } catch (e) {
+    console.error(e)
+  } finally {
+    isFormVisible.value = false
+  }
+}
+
+const formStatus = computed(() => {
+  const fields = Object.values(formBilan.value)
+  const filledFields = fields.filter((value) => value.trim().length > 0).length
+
+  if (filledFields === 0) return 'empty'
+  if (filledFields === fields.length) return 'complete'
+  return 'in-progress'
+})
+
 onMounted(async () => {
+  voice.reset()
   await loadData()
-  if (videoUrl.value) initAblePlayer()
-})
-
-watch(videoUrl, (url) => {
-  if (url) initAblePlayer()
-})
-
-onMounted(() => {
-  voice.reset() 
 })
 
 onUnmounted(() => {
-  voice.stop() 
+  voice.stop()
 })
 </script>
 
@@ -267,16 +335,17 @@ onUnmounted(() => {
             <p v-else-if="isDeaf" class="block-sub">Sous-titres disponibles</p>
           </div>
         </div>
-        <div class="able-wrap">
+
+        <div class="able-wrap" :key="videoUrl">
           <video
-            class="lesson-video"
             controls
-            :src="videoUrl"
-            aria-label="Vidéo du cours"
-            width="100%"
-            style="height: 550px"
+            preload="metadata"
+            style="width: 100%; height: 100%; object-fit: contain"
+            class="native-html5-video"
           >
-            <track kind="subtitles" srclang="fr" label="Français" default />
+            <source :src="videoUrl" type="video/mp4" />
+            <source :src="videoUrl" type="video/webm" />
+            Votre navigateur ne supporte pas la lecture de vidéos HTML5.
           </video>
         </div>
       </section>
@@ -307,21 +376,31 @@ onUnmounted(() => {
         </div>
 
         <div class="audio-quick-btns">
-          <button class="quick-btn quick-btn--audio" @click="toggleTts" type="button">
-            <svg
-              v-if="!isTtsPlaying"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              width="16"
-              height="16"
-            >
+          <button class="quick-btn quick-btn--audio" @click="togglePlay" type="button">
+            <svg v-if="!isPlaying" viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
               <polygon points="5 3 19 12 5 21 5 3" />
             </svg>
             <svg v-else viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
               <rect x="6" y="4" width="4" height="16" rx="1" />
               <rect x="14" y="4" width="4" height="16" rx="1" />
             </svg>
-            {{ isTtsPlaying ? 'Arrêter la lecture' : 'Écouter le cours' }}
+            {{ isPlaying ? 'Pause' : 'Écouter le cours' }}
+          </button>
+          <button v-if="hasTts" class="quick-btn quick-btn--tts" @click="toggleTts" type="button">
+            <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+              <path
+                d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"
+                stroke="currentColor"
+                stroke-width="2"
+              />
+              <path
+                d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+              />
+            </svg>
+            {{ isTtsPlaying ? 'Arrêter la lecture' : 'Écouter le texte' }}
           </button>
         </div>
 
@@ -444,7 +523,7 @@ onUnmounted(() => {
               />
             </svg>
           </div>
-          <div class="block-title-row">
+          <div class="s btn-resume">
             <h2 class="block-title">Contenu du cours</h2>
             <button
               v-if="hasTts"
@@ -471,34 +550,15 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <!-- Contrôles typo + contraste malvoyant -->
         <div class="typo-controls">
           <button class="typo-btn" @click="fs = Math.max(14, fs - 2)" type="button">A-</button>
           <span class="typo-val">{{ fs }}px</span>
           <button class="typo-btn typo-btn--lg" @click="fs = Math.min(32, fs + 2)" type="button">
             A+
           </button>
-          <button
-            v-if="isLowVision"
-            class="typo-btn typo-btn--contrast"
-            :class="{ 'typo-btn--contrast-active': hiContrast }"
-            :aria-pressed="hiContrast"
-            @click="hiContrast = !hiContrast"
-            type="button"
-          >
-            <svg viewBox="0 0 24 24" fill="none" width="14" height="14">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
-              <path d="M12 2a10 10 0 0 1 0 20V2z" fill="currentColor" />
-            </svg>
-            Contraste
-          </button>
         </div>
 
-        <article
-          class="lesson-content"
-          :class="{ 'hi-contrast': hiContrast }"
-          :style="{ fontSize: fs + 'px', lineHeight: '1.8' }"
-        >
+        <article class="lesson-content" :style="{ fontSize: fs + 'px', lineHeight: '1.8' }">
           <template v-for="(block, i) in lesson.content" :key="i">
             <h3 v-if="block.type === 'heading'" class="content-h">{{ block.text }}</h3>
             <p v-else-if="block.type === 'paragraph'" class="content-p">{{ block.text }}</p>
@@ -519,9 +579,195 @@ onUnmounted(() => {
           </p>
         </article>
       </section>
+      <div class="block-title-rows btn-resume " style="display: flex;justify-content: space-between;align-items: center; gap:30px">
+      <h2></h2>
+        <button class=" cta-btn" @click="showResume = !showResume" type="button" >
+          {{ showResume ? 'Masquer' : ' résumé materiels et strategies' }}
+        </button>
+      </div>
+      <div v-if="showResume">
+        <section v-if="resume" class="content-block block--text">
+          <!-- Résumé -->
+          <div v-if="resume" class="block-header" style="margin-bottom: 12px">
+            <div class="block-icon-wrap block-icon--text">
+              <svg viewBox="0 0 24 24" fill="none" width="22" height="22">
+                <path
+                  d="M4 6h16M4 12h12M4 18h8"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </div>
+            <div>
+              <h2 class="block-title">Résumé</h2>
+              <p class="content-p" style="margin-top: 4px">{{ resume }}</p>
+            </div>
+          </div>
+        </section>
 
-      <!-- CTA Quiz -->
-      <div v-if="apiCours?.quizzes?.length" class="quiz-cta">
+        <!-- ── Matériel nécessaire ── -->
+        <section class="content-block block--text" v-if="materiels.length || strategies.length">
+          <!-- Matériel nécessaire -->
+          <div v-if="materiels.length" class="course-extra">
+            <p class="extra-label">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                width="12"
+                height="12"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                <path d="M2 17l10 5 10-5" />
+                <path d="M2 12l10 5 10-5" />
+              </svg>
+              Matériel nécessaire
+            </p>
+            <ul class="extra-list">
+              <li v-for="item in materiels" :key="item.id" class="extra-item">{{ item.name }}</li>
+            </ul>
+          </div>
+
+          <!-- Stratégie d'utilisation -->
+          <div v-if="strategies.length" class="course-extra course-extra--strategy">
+            <p class="extra-label extra-label--strategy">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                width="12"
+                height="12"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 8v4l3 3" />
+              </svg>
+              Stratégie d'utilisation
+            </p>
+            <ol class="extra-list extra-list--ol">
+              <li v-for="item in strategies" :key="item.id" class="extra-item">{{ item.name }}</li>
+            </ol>
+          </div>
+        </section>
+      </div>
+
+      <!-- CTA Retour -->
+      <div class="retour-cta" v-if="!isFormVisible">
+        <div class="form-intro">
+          <div class="block-header">
+            <svg viewBox="0 0 24 24" fill="none" width="22" height="22">
+              <path
+                d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+
+            <div class="s btn-resume" style="display: block">
+              <h2 class="block-title">Bilan d'apprentissage</h2>
+              <p class="block-sub" style="font-size: 15px">
+                Prends un moment pour réfléchir à ce que tu as appris.
+              </p>
+            </div>
+          </div>
+          <button class="cta-btn" @click="isFormVisible = true" type="button">
+            <span :class="['global-status-dot', formStatus]"></span>
+
+            Faire mon bilan
+            <svg viewBox="0 0 24 24" fill="none" width="18" height="18" style="margin-left: 6px">
+              <path
+                d="M12 5v14M5 12h14"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <section class="content-block block--text" v-if="isFormVisible">
+        <form class="feedback-form" @submit.prevent="submitBilan">
+          <div class="form-group">
+            <label for="q-appris" class="content-h">Qu'as-tu appris ?</label>
+            <textarea
+              id="q-appris"
+              v-model="formBilan.appris"
+              class="form-input"
+              rows="3"
+              placeholder="Écris ta réponse ici..."
+            ></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="q-comment" class="content-h">Comment l'as-tu appris ?</label>
+            <textarea
+              id="q-comment"
+              v-model="formBilan.comment"
+              class="form-input"
+              rows="3"
+              placeholder="Ex: En regardant la vidéo, en lisant le texte..."
+            ></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="q-difficultes" class="content-h"
+              >As-tu rencontré des difficultés ? Si oui, lesquelles ?</label
+            >
+            <textarea
+              id="q-difficultes"
+              v-model="formBilan.difficultes"
+              class="form-input"
+              rows="3"
+              placeholder="N'hésite pas à détailler ce qui t'a bloqué..."
+            ></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="q-action" class="content-h"
+              >Que penses-tu faire de ce que tu as appris ?</label
+            >
+            <textarea
+              id="q-action"
+              v-model="formBilan.action"
+              class="form-input"
+              rows="3"
+              placeholder="Comment vas-tu utiliser ces nouvelles connaissances ?"
+            ></textarea>
+          </div>
+
+          <div class="form-actions">
+            <button
+              type="button"
+              class="ctrl-btn"
+              @click="isFormVisible = false"
+              style="margin-right: 10px"
+            >
+              Annuler
+            </button>
+            <button type="submit" class="cta-btn">Envoyer mes réponses</button>
+          </div>
+        </form>
+      </section>
+
+      <!-- CTA Quiz — visible uniquement si quiz_authorise === true ET quizzes présents -->
+      <div v-if="quizVisible" class="quiz-cta">
         <div class="cta-inner">
           <div class="cta-icon">
             <svg viewBox="0 0 24 24" fill="none" width="24" height="24">
@@ -679,7 +925,7 @@ onUnmounted(() => {
   gap: 16px;
   margin-bottom: 24px;
 }
-.block-title-row {
+.s btn-resume {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -731,6 +977,10 @@ onUnmounted(() => {
   border-radius: 12px;
   overflow: hidden;
   background: #000;
+  height: 500px;
+}
+.able-wrap :deep(.able-player) {
+  width: 100% !important;
 }
 .audio-quick-btns {
   display: flex;
@@ -911,8 +1161,6 @@ onUnmounted(() => {
 .lesson-figure:hover .img-zoom-hint {
   opacity: 1;
 }
-
-/* Contrôles typo */
 .typo-controls {
   display: flex;
   align-items: center;
@@ -936,23 +1184,12 @@ onUnmounted(() => {
 .typo-btn--lg {
   font-size: 1.05rem;
 }
-.typo-btn--contrast {
-  gap: 6px;
-}
-.typo-btn--contrast-active {
-  background: rgba(79, 70, 229, 0.15);
-  color: #5c4fe0;
-  border-color: rgba(79, 70, 229, 0.35);
-  font-weight: bold;
-}
 .typo-val {
   font-size: 0.78rem;
   color: #9c8e80;
   min-width: 36px;
   text-align: center;
 }
-
-/* Contenu texte */
 .lesson-content {
   color: #6b5e4e;
 }
@@ -966,7 +1203,6 @@ onUnmounted(() => {
 .content-p {
   margin: 0 0 14px 0;
   line-height: inherit;
-  color: #000;
 }
 .content-kp {
   background: rgba(79, 70, 229, 0.08);
@@ -1013,34 +1249,20 @@ onUnmounted(() => {
   font-style: italic;
   padding: 16px 0;
 }
-
-/* Mode contraste élevé — malvoyant */
-.hi-contrast {
-  background: #000;
-  color: #ffe066;
-  padding: 20px;
-  border-radius: 12px;
-  border: 2px solid rgba(255, 224, 102, 0.3);
+.retour-cta {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(6, 182, 212, 0.12));
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 18px;
+  padding: 24px 28px;
 }
-.hi-contrast .content-h {
-  color: #ffe066;
+.cta-icon--retour {
+  background: rgba(16, 185, 129, 0.2);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #065f46;
 }
-.hi-contrast .content-p {
-  color: #fff;
+.cta-btn--retour {
+  background: linear-gradient(135deg, #10b981, #06b6d4);
 }
-.hi-contrast .content-kp {
-  background: rgba(255, 224, 102, 0.1);
-  border-color: rgba(255, 224, 102, 0.4);
-  border-left-color: #ffe066;
-}
-.hi-contrast .kp-text {
-  color: #ffe066;
-}
-.hi-contrast li {
-  color: #fff;
-}
-
-/* Quiz CTA */
 .quiz-cta {
   background: linear-gradient(135deg, rgba(79, 70, 229, 0.15), rgba(124, 58, 237, 0.15));
   border: 1px solid rgba(79, 70, 229, 0.3);
@@ -1096,7 +1318,6 @@ onUnmounted(() => {
 .cta-btn:hover {
   transform: translateY(-2px);
 }
-
 @media (max-width: 640px) {
   .page-body {
     padding: 20px 14px 40px;
@@ -1116,5 +1337,168 @@ onUnmounted(() => {
     width: 100%;
     justify-content: center;
   }
+}
+.form-intro {
+  display: flex;
+  margin-top: 16px;
+}
+
+.feedback-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-top: 16px;
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.form-group .content-h {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.form-input {
+  width: 100%;
+  padding: 14px 16px;
+  background: #fdfbf8;
+  border: 1.5px solid rgba(120, 100, 80, 0.25);
+  border-radius: 12px;
+  color: #2c2416;
+  font-family: 'Verdana', 'Geneva', sans-serif;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  resize: vertical;
+  min-height: 80px;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.form-input::placeholder {
+  color: #9c8e80;
+  font-style: italic;
+  opacity: 0.8;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #5c4fe0;
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(92, 79, 224, 0.1);
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+.global-status-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.4s ease;
+}
+
+/* État : Rien n'est rempli */
+.global-status-dot.empty {
+  background-color: #94a3b8; /* Gris */
+}
+
+/* État : Au moins un champ rempli mais pas tous */
+.global-status-dot.in-progress {
+  background-color: #f59e0b; /* Orange/Ambre */
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
+}
+
+/* État : Tout est prêt */
+.global-status-dot.complete {
+  background-color: #1e293b; /* Bleu nuit */
+  box-shadow: 0 0 10px rgba(30, 41, 59, 0.6);
+}
+
+/* Animation optionnelle pour attirer l'attention quand c'est en cours */
+.global-status-dot.in-progress {
+  animation: pulse-orange 2s infinite;
+}
+
+@keyframes pulse-orange {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@media (max-width: 640px) {
+  .form-actions .cta-btn,
+  .form-intro .cta-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+/*  Matériel et Stratégie  */
+.course-extra {
+  margin-top: 10px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  background: rgba(120, 100, 80, 0.04);
+  border: 1px solid rgba(120, 100, 80, 0.12);
+}
+.course-extra--strategy {
+  background: rgba(79, 70, 229, 0.04);
+  border-color: rgba(79, 70, 229, 0.15);
+}
+.extra-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0 0 6px;
+  font-size: 1.7rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #6b5e4e;
+}
+.extra-label--strategy {
+  color: #4338ca;
+}
+.extra-list {
+  margin: 0;
+  padding-left: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  list-style: disc;
+}
+.extra-list--ol {
+  list-style: decimal;
+}
+.extra-item {
+  font-size: 1.4rem;
+  color: #5c4e3e;
+  line-height: 1.55;
 }
 </style>

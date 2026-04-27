@@ -53,6 +53,7 @@ onMounted(()=>{
       <div><span></span><router-link to="/enseignant/cours" active-class="active" class="header-part2-link2">Mes cours</router-link></div>
       <div><span></span><router-link to="/enseignant/quiz" active-class="active" class="header-part2-link3">Mes quiz</router-link></div>
       <div><span></span><router-link to="/enseignant/eleve" active-class="active" class="header-part2-link4"> Mes Elèves</router-link></div>
+      <div><span></span><router-link to="/enseignant/cours/bilan" active-class="active" class="header-part2-link4">Elèves Bilan</router-link></div>
     </div>
     <div class="header-part3">
       <div class="header-part3-link2" @click="apiLogoutUser">Deconnexion</div>

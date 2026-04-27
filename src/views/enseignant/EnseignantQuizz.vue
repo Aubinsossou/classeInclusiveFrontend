@@ -146,9 +146,7 @@ const submitCreateQuiz = async () => {
   }
 }
 
-// ─────────────────────────────────────────────
-// SUPPRIMER UN QUIZ
-// ─────────────────────────────────────────────
+
 const deleteQuiz = async (q) => {
   if (!confirm(`Supprimer « ${q.name} » ?`)) return
   await apiDelete(`quiz/destroy/${q.id}`)
@@ -156,9 +154,7 @@ const deleteQuiz = async (q) => {
   if (activeQuiz.value?.id === q.id) backToList()
 }
 
-// ─────────────────────────────────────────────
-// QUESTIONS
-// ─────────────────────────────────────────────
+
 const addingQuestion  = ref(false)
 const questionDraft   = ref('')
 const questionLoading = ref(false)
@@ -188,9 +184,7 @@ const deleteQuestion = async (qu) => {
   syncActiveQuiz()
 }
 
-// ─────────────────────────────────────────────
-// RÉPONSES
-// ─────────────────────────────────────────────
+
 const addingReponseTo = ref(null)
 const reponseDraft    = reactive({})
 const correctDraft    = reactive({})

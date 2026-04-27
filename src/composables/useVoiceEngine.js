@@ -1,48 +1,38 @@
 // ============================================================
-//  useVoiceEngine.js  —  Singleton global  v2
-//
-//  Bugs corrigés :
-//  1. _aborted restait true après stopAll → speak() muet
-//     Fix : speak() remet _aborted = false lui-même
-//  2. getVoices() retourne [] au 1er appel (async)
-//     Fix : voix chargée via voiceschanged + cache
-//  3. Chaîne announce → lireBloc rompue si _aborted
-//     Fix : lireBloc passe par announce(), pas speak() direct
+//  useVoiceEngine.js  —  Singleton global  v3 (Hybride Pro)
 // ============================================================
-
 import { ref } from 'vue'
 
-// ── Singleton ─────────────────────────────────────────────
 const isSpeaking   = ref(false)
 const isListening  = ref(false)
 const lastHeard    = ref('')
 const lastSpoken   = ref('')
 const currentRecog = ref(null)
-let   _aborted     = false
+let   _aborted      = false
+let   _frVoice      = null
 
-// ── Cache voix française ──────────────────────────────────
-let _frVoice = null
-
+// ── Cache voix native (Fallback) ──────────────────────────
 function _loadVoices() {
   const voices = window.speechSynthesis.getVoices()
-  const fr = voices.find(v => v.lang === 'fr-FR')
-          || voices.find(v => v.lang.startsWith('fr'))
-  if (fr) _frVoice = fr
+  _frVoice = voices.find(v => v.lang === 'fr-FR' && v.name.includes('Google')) 
+             || voices.find(v => v.lang === 'fr-FR')
+             || voices.find(v => v.lang.startsWith('fr'))
 }
 
-// Charger maintenant ET lors de voiceschanged
-_loadVoices()
 if (typeof window !== 'undefined') {
+  _loadVoices()
   window.speechSynthesis.addEventListener('voiceschanged', _loadVoices)
 }
 
-// ─────────────────────────────────────────────────────────
-//  STOP global
-// ─────────────────────────────────────────────────────────
 function stopAll() {
   _aborted = true
   try { window.speechSynthesis.cancel() } catch {}
-  isSpeaking.value  = false
+  // Arrêter aussi l'audio si on utilise le mode API
+  if (window._currentAudio) {
+    window._currentAudio.pause()
+    window._currentAudio = null
+  }
+  isSpeaking.value = false
   if (currentRecog.value) {
     try { currentRecog.value.abort() } catch {}
     currentRecog.value = null
@@ -51,81 +41,99 @@ function stopAll() {
 }
 
 // ─────────────────────────────────────────────────────────
-//  SPEAK
+//  SPEAK (Version Hybride)
 // ─────────────────────────────────────────────────────────
-function speak(text) {
-  return new Promise((resolve) => {
-    if (!text) { resolve(); return }
-    // Si stopAll() a été appelé (navigation), on ne parle pas
-    if (_aborted) { resolve(); return }
+async function speak(text) {
+  return new Promise(async (resolve) => {
+    if (!text || _aborted) return resolve()
 
-    lastSpoken.value  = text
-    isSpeaking.value  = true
+    _aborted = false // Sécurité : on réactive si on appelle speak
+    lastSpoken.value = text
+    isSpeaking.value = true
 
-    // Annuler toute synthèse en cours
-    try { window.speechSynthesis.cancel() } catch {}
+    // --- TENTATIVE VOIX PRO (API) ---
+    try {
+      // Remplace par l'URL de ton futur serveur Laravel en ligne
+      const response = await fetch('/api/synthesize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text })
+      })
 
-    const utt     = new SpeechSynthesisUtterance(text)
-    utt.lang      = 'fr-FR'
-    utt.rate      = 0.88
-    utt.pitch     = 1.0
-    utt.volume    = 1.0
+      if (!response.ok) throw new Error("Mode API indisponible")
 
-    // ← FIX 2 : utiliser le cache voix
-    if (_frVoice) utt.voice = _frVoice
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      const audio = new Audio(url)
+      window._currentAudio = audio // Stockage pour pouvoir l'arrêter via stopAll
 
-    utt.onend = () => {
-      isSpeaking.value = false
-      resolve()
+      audio.onended = () => {
+        isSpeaking.value = false
+        URL.revokeObjectURL(url)
+        resolve()
+      }
+      audio.onerror = () => { throw new Error("Erreur audio") }
+      audio.play()
+
+    } catch (e) {
+      // --- FALLBACK VOIX NATIVE (Si l'API échoue ou Firefox offline) ---
+      console.warn("Mode API échoué, utilisation de la voix navigateur.");
+      
+      try { window.speechSynthesis.cancel() } catch {}
+
+      const utt = new SpeechSynthesisUtterance(text)
+      utt.lang = 'fr-FR'
+      utt.rate = 0.88
+      if (_frVoice) utt.voice = _frVoice
+
+      const safety = setTimeout(() => {
+        isSpeaking.value = false
+        resolve()
+      }, 30000)
+
+      utt.onend = () => {
+        clearTimeout(safety)
+        isSpeaking.value = false
+        resolve()
+      }
+      utt.onerror = () => {
+        clearTimeout(safety)
+        isSpeaking.value = false
+        resolve()
+      }
+
+      window.speechSynthesis.speak(utt)
     }
-    utt.onerror = (e) => {
-      isSpeaking.value = false
-      // Ignorer l'erreur "interrupted" (cancel() appelé volontairement)
-      resolve()
-    }
-
-    // Workaround Chrome : speechSynthesis se bloque après ~15s
-    // On relance si nécessaire
-    window.speechSynthesis.speak(utt)
-
-    // Safety : si onend ne se déclenche pas après 30s
-    const safety = setTimeout(() => {
-      isSpeaking.value = false
-      resolve()
-    }, 30000)
-    utt.onend = () => { clearTimeout(safety); isSpeaking.value = false; resolve() }
-    utt.onerror = () => { clearTimeout(safety); isSpeaking.value = false; resolve() }
   })
 }
 
 // ─────────────────────────────────────────────────────────
-//  LISTEN
+//  LISTEN (Inchangé, car la reco de Chrome est déjà top)
 // ─────────────────────────────────────────────────────────
 function listen(commandMap, timeout = 9000) {
   return new Promise((resolve) => {
-    if (_aborted) { resolve(null); return }
+    if (_aborted) return resolve(null)
 
-    const SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition
-    if (!SpeechRecognition) { resolve(null); return }
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+    if (!SpeechRecognition) return resolve(null)
 
     if (currentRecog.value) {
       try { currentRecog.value.abort() } catch {}
     }
 
     const recog = new SpeechRecognition()
-    recog.lang             = 'fr-FR'
-    recog.interimResults   = false
-    recog.maxAlternatives  = 3
-    currentRecog.value     = recog
-    isListening.value      = true
+    recog.lang = 'fr-FR'
+    recog.interimResults = false
+    recog.maxAlternatives = 3
+    currentRecog.value = recog
+    isListening.value = true
 
     let done = false
-    function finish(val) {
+    const finish = (val) => {
       if (done) return
       done = true
       clearTimeout(timer)
-      isListening.value  = false
+      isListening.value = false
       currentRecog.value = null
       resolve(val)
     }
@@ -137,38 +145,32 @@ function listen(commandMap, timeout = 9000) {
 
     recog.onresult = (e) => {
       const candidates = Array.from(e.results[0]).map(r =>
-        r.transcript.toLowerCase().trim()
-          .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        r.transcript.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
       )
       lastHeard.value = candidates[0] || ''
 
       for (const transcript of candidates) {
         for (const [pattern, action] of Object.entries(commandMap || {})) {
-          const variants = pattern.split('|')
-          if (variants.some(v => transcript.includes(v))) {
-            finish({ transcript, action })
-            return
+          if (pattern.split('|').some(v => transcript.includes(v))) {
+            return finish({ transcript, action })
           }
         }
       }
-      // ← CHANGEMENT : si rien compris, retourner transcript sans action
       finish({ transcript: candidates[0], action: null })
     }
 
     recog.onerror = () => finish(null)
-    recog.onend   = () => finish(null)
-
+    recog.onend = () => finish(null)
     try { recog.start() } catch { finish(null) }
   })
 }
+
 // ─────────────────────────────────────────────────────────
-//  ANNOUNCE — parle puis écoute
+//  ANNOUNCE & UTILS
 // ─────────────────────────────────────────────────────────
 async function announce(text, commandMap, onUnrecognized) {
-  // Ne pas réinitialiser _aborted ici — speak() le fait
   await speak(text)
   if (_aborted) return
-
   if (!commandMap || Object.keys(commandMap).length === 0) return
 
   const result = await listen(commandMap)
@@ -181,27 +183,8 @@ async function announce(text, commandMap, onUnrecognized) {
   }
 }
 
-// ─────────────────────────────────────────────────────────
-//  Export
-// ─────────────────────────────────────────────────────────
-// Réinitialiser le flag _aborted — à appeler en onMounted des vues blind
-function reset() {
-  _aborted = false
-}
+function reset() { _aborted = false }
 
 export function useVoiceEngine() {
-  return {
-    isSpeaking,
-    isListening,
-    lastHeard,
-    lastSpoken,
-    speak,
-    listen,
-    announce,
-    reset,
-    stop:    stopAll,
-    stopAll,
-  }
+  return { isSpeaking, isListening, lastHeard, lastSpoken, speak, listen, announce, reset, stop: stopAll, stopAll }
 }
-
-export { stopAll as stopVoice }

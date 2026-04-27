@@ -4,38 +4,36 @@ import { apiGet, apiPost, apiDelete } from '@/helpers/axiosApi'
 import LoadingEcole from '@/components/admin/LoadingEcole.vue'
 import codeToggle from '@/components/admin/codeToggle.vue'
 
-
-// ── Utilisateur connecté ───────────────────────────────────────
+//  Utilisateur connecté
 const userAuth = ref(null)
 
 const apiGetUser = async () => {
   const response = await apiGet('ecole/getEcole')
-  userAuth.value = response.data.data // réponse enveloppée { status, message, data: {...} }
+  userAuth.value = response.data.data
   console.log('userAuth.value:', userAuth.value)
 }
 
-// ── Listes de référence ────────────────────────────────────────
+//  Listes de référence
 const classes = ref([])
 const handicaps = ref([])
 
-const apiGetClasses = async (ecole_id) => {
+const apiGetClasses = async () => {
   try {
-    const response = await apiGet('ecole/classe/index/' + ecole_id)
-    classes.value = response.data.data ?? [] // .data.data car réponse enveloppée
+    classes.value = userAuth.value?.classes ?? []
     console.log('classes.value:', classes.value)
   } catch {
-    classes.value = [] // route 404 → pas de crash
+    classes.value = []
     console.log('classes: route indisponible, tableau vide')
   }
 }
 
 const apiGetHandicaps = async () => {
   const response = await apiGet('ecole/handicap/index')
-  handicaps.value = response.data.data ?? [] // .data.data
+  handicaps.value = response.data.data ?? []
   console.log('handicaps.value:', handicaps.value)
 }
 
-// ── Liste des élèves ───────────────────────────────────────────
+//  Liste des élèves
 const eleves = ref([])
 const loading = ref(false)
 
@@ -47,7 +45,6 @@ const apiGetEleves = async () => {
   loading.value = false
 }
 
-// ── Filtres ────────────────────────────────────────────────────
 const search = ref('')
 const filterClasse = ref('')
 const filterHandicap = ref('')
@@ -62,7 +59,6 @@ const filtered = computed(() =>
   }),
 )
 
-// ── Formulaire créer / modifier ────────────────────────────────
 const showForm = ref(false)
 const editTarget = ref(null)
 
@@ -73,24 +69,25 @@ const form = reactive({
   numeroParent: '',
   classe_id: '',
   handicap_id: '',
+  code: '',
 })
 
-function resetForm() {
+const resetForm = () => {
   form.name = ''
   form.prenom = ''
   form.dateNaissance = ''
   form.numeroParent = ''
   form.classe_id = ''
   form.handicap_id = ''
+  form.code = ''
 }
-
 function openAdd() {
   editTarget.value = null
   resetForm()
   showForm.value = true
 }
 
-function openEdit(e) {
+const openEdit = (e) => {
   editTarget.value = e
   Object.assign(form, {
     name: e.name ?? '',
@@ -98,12 +95,12 @@ function openEdit(e) {
     dateNaissance: e.dateOfNaissance ?? '',
     numeroParent: e.numeroParent ?? '',
     classe_id: e.classe_id ?? '',
+    code: e.code ?? '',
     handicap_id: e.handicap_id ?? '',
   })
   showForm.value = true
 }
-
-// ── CRÉER ──────────────────────────────────────────────────────
+//  CRÉER ─
 const apiRegisterEleve = async () => {
   const response = await apiPost('ecole/eleve/registerEleve', {
     name: form.name.trim(),
@@ -113,13 +110,14 @@ const apiRegisterEleve = async () => {
     classe_id: form.classe_id,
     handicap_id: form.handicap_id,
     ecole_id: userAuth.value.id,
+    code: form.code.trim(),
   })
   console.log('élève créé:', response.data)
   showForm.value = false
   await apiGetEleves()
 }
 
-// ── MODIFIER ───────────────────────────────────────────────────
+//  MODIFIER
 const apiUpdateEleve = async () => {
   const response = await apiPost(`ecole/eleve/update/${editTarget.value.id}`, {
     name: form.name.trim(),
@@ -144,7 +142,7 @@ const submitForm = async () => {
   }
 }
 
-// ── SUPPRIMER ──────────────────────────────────────────────────
+//  SUPPRIMER ─
 const showDelete = ref(false)
 const deleteTarget = ref(null)
 
@@ -166,7 +164,7 @@ const doDelete = async () => {
   await apiDeleteEleve()
 }
 
-// ── Init ───────────────────────────────────────────────────────
+//  Init
 onMounted(async () => {
   loading.value = true
   await apiGetUser()
@@ -174,105 +172,106 @@ onMounted(async () => {
   await apiGetClasses(userAuth.value?.id)
   await apiGetHandicaps()
   loading.value = false
-
 })
 </script>
 
 <template>
-
   <LoadingEcole :visible="loading" :fullscreen="true" offset-top="100px" message="Chargement" />
 
   <div v-if="loading == false">
     <section class="page container">
-    <!-- ══ HEADER ══ -->
-    <div class="page-header">
-      <div>
-        <h1 class="page-title">Élèves</h1>
-        <p class="page-sub">{{ eleves.length }} élève(s) enregistré(s)</p>
+      <!-- ══ HEADER ══ -->
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Élèves</h1>
+          <p class="page-sub">{{ eleves.length }} élève(s) enregistré(s)</p>
+        </div>
+        <button class="btn btn-primary" @click.prevent="openAdd">
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+          >
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          Inscrire un élève
+        </button>
       </div>
-      <button class="btn btn-primary" @click.prevent="openAdd">
-        <svg
-          width="15"
-          height="15"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2.5"
-          stroke-linecap="round"
-        >
-          <line x1="12" y1="5" x2="12" y2="19" />
-          <line x1="5" y1="12" x2="19" y2="12" />
-        </svg>
-        Inscrire un élève
-      </button>
-    </div>
 
-    <!-- ══ FILTRES ══ -->
-    <div class="toolbar">
-      <div class="search-wrap">
-        <svg
-          class="search-icon"
-          width="15"
-          height="15"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-        >
-          <circle cx="11" cy="11" r="8" />
-          <line x1="21" y1="21" x2="16.65" y2="16.65" />
-        </svg>
-        <input
-          v-model="search"
-          type="search"
-          class="search-input"
-          placeholder="Rechercher par nom, prénom…"
-        />
+      <!-- ══ FILTRES ══ -->
+      <div class="toolbar">
+        <div class="search-wrap">
+          <svg
+            class="search-icon"
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input
+            v-model="search"
+            type="search"
+            class="search-input"
+            placeholder="Rechercher par nom, prénom…"
+          />
+        </div>
+        <select v-model="filterClasse" class="sel">
+          <option value="">Toutes les classes</option>
+          <option v-for="c in classes" :key="c.id" :value="c.id">{{ c.name }}</option>
+        </select>
+        <select v-model="filterHandicap" class="sel">
+          <option value="">Tous les profils</option>
+          <option v-for="h in handicaps" :key="h.id" :value="h.id">{{ h.name }}</option>
+        </select>
       </div>
-      <select v-model="filterClasse" class="sel">
-        <option value="">Toutes les classes</option>
-        <option v-for="c in classes" :key="c.id" :value="c.id">{{ c.name }}</option>
-      </select>
-      <select v-model="filterHandicap" class="sel">
-        <option value="">Tous les profils</option>
-        <option v-for="h in handicaps" :key="h.id" :value="h.id">{{ h.name }}</option>
-      </select>
-    </div>
 
-    <!-- ══ TABLEAU ══ -->
-    <div class="table-wrap">
-      <table class="table">
-        <thead>
-          <tr>
-            <th>Élève</th>
-            <th>Classe</th>
-            <th>Profil</th>
-            <th>Code</th>
-            <th>Date de naissance</th>
-            <th>N° parents</th>
-            <th style="text-align: right">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-         
-
-         
+      <!-- ══ TABLEAU ══ -->
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Élève</th>
+              <th>Classe</th>
+              <th>Profil</th>
+              <th>Code</th>
+              <th>Date de naissance</th>
+              <th>N° parents</th>
+              <th style="text-align: right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
             <tr v-for="e in filtered" :key="e.id">
               <td>
                 <div style="display: flex; align-items: center; gap: 10px">
                   <div class="avatar">{{ e.prenom?.charAt(0).toUpperCase() }}</div>
-                  <div class="row-name" style="text-transform: uppercase;">{{ e.name }} {{ e.prenom }}</div>
+                  <div class="row-name" style="text-transform: uppercase">
+                    {{ e.name }} {{ e.prenom }}
+                  </div>
                 </div>
               </td>
               <td>
-                <span class="badge badge-green" style="text-transform: uppercase;">{{ e.classe?.name ?? '—' }}</span>
+                <span class="badge badge-green" style="text-transform: uppercase">{{
+                  e.classe?.name ?? '—'
+                }}</span>
               </td>
               <td>
-                <span class="badge badge-blue" style="text-transform: uppercase;">{{ e.handicap?.name ?? 'Standard' }}</span>
+                <span class="badge badge-blue" style="text-transform: uppercase">{{
+                  e.handicap?.name ?? 'Standard'
+                }}</span>
               </td>
-               <td>
-                <span class="badge badge-blue"><codeToggle :code="String(e?.code ?? '')"  /></span>
+              <td>
+                <span class="badge badge-blue"><codeToggle :code="String(e?.code ?? '')" /></span>
               </td>
               <td class="td-muted">{{ e.dateOfNaissance ?? '—' }}</td>
               <td class="td-muted">{{ e.numeroParent ?? '—' }}</td>
@@ -326,176 +325,185 @@ onMounted(async () => {
                 Aucun élève trouvé.
               </td>
             </tr>
-        
-        </tbody>
-      </table>
-    </div>
+          </tbody>
+        </table>
+      </div>
 
-    <!-- ══ MODALE CRÉER / MODIFIER ══ -->
-    <Teleport v-if="showForm" to="body">
-      <div class="h-overlay" @click.self="showForm = false">
-        <div class="h-modal h-modal-lg">
-          <div class="h-modal-head">
-            <h2 class="h-modal-title">
-              {{ editTarget ? "Modifier l'élève" : 'Inscrire un élève' }}
-            </h2>
-            <button class="h-close-btn" @click="showForm = false">
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.5"
-                stroke-linecap="round"
-              >
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
-          </div>
+      <!-- ══ MODALE CRÉER / MODIFIER ══ -->
+      <Teleport v-if="showForm" to="body">
+        <div class="h-overlay" @click.self="showForm = false">
+          <div class="h-modal h-modal-lg">
+            <div class="h-modal-head">
+              <h2 class="h-modal-title">
+                {{ editTarget ? "Modifier l'élève" : 'Inscrire un élève' }}
+              </h2>
+              <button class="h-close-btn" @click="showForm = false">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
 
-          <div class="h-modal-body">
-            <div class="h-form-grid">
-              <div class="h-field">
-                <label class="h-lbl">Nom <span class="h-req">*</span></label>
-                <input v-model="form.name" class="h-inp" placeholder="Ex : DUPONT" />
-              </div>
+            <div class="h-modal-body">
+              <div class="h-form-grid">
+                <div class="h-field">
+                  <label class="h-lbl">Nom <span class="h-req">*</span></label>
+                  <input v-model="form.name" class="h-inp" placeholder="Ex : DUPONT" />
+                </div>
 
-              <div class="h-field">
-                <label class="h-lbl">Prénom <span class="h-req">*</span></label>
-                <input v-model="form.prenom" class="h-inp" placeholder="Ex : Lucas" />
-              </div>
+                <div class="h-field">
+                  <label class="h-lbl">Prénom <span class="h-req">*</span></label>
+                  <input v-model="form.prenom" class="h-inp" placeholder="Ex : Lucas" />
+                </div>
 
-              <div class="h-field">
-                <label class="h-lbl">Date de naissance</label>
-                <input v-model="form.dateNaissance" type="date" class="h-inp" />
-              </div>
+                <div class="h-field">
+                  <label class="h-lbl">Date de naissance</label>
+                  <input v-model="form.dateNaissance" type="date" class="h-inp" />
+                </div>
 
-              <div class="h-field">
-                <label class="h-lbl">N° des parents</label>
-                <input
-                  v-model="form.numeroParent"
-                  class="h-inp"
-                  placeholder="Ex : 0195959595"
-                  type="text"
-                />
-              </div>
+                <div class="h-field">
+                  <label class="h-lbl">N° des parents</label>
+                  <input
+                    v-model="form.numeroParent"
+                    class="h-inp"
+                    placeholder="Ex : 0195959595"
+                    type="text"
+                  />
+                </div>
+                <div class="h-field">
+                  <label class="h-lbl">Code(Matricule)</label>
+                  <input
+                    v-model="form.code"
+                    class="h-inp"
+                    placeholder="Ex : 123456"
+                    type="text"
+                  />
+                </div>
 
-              <div class="h-field">
-                <label class="h-lbl">Classe <span class="h-req">*</span></label>
-                <select v-model="form.classe_id" class="h-inp">
-                  <option value="">— Choisir —</option>
-                  <option v-for="c in classes" :key="c.id" :value="c.id">{{ c.name }}</option>
-                </select>
-              </div>
+                <div class="h-field">
+                  <label class="h-lbl">Classe <span class="h-req">*</span></label>
+                  <select v-model="form.classe_id" class="h-inp">
+                    <option value="">— Choisir —</option>
+                    <option v-for="c in classes" :key="c.id" :value="c.id">{{ c.name }}</option>
+                  </select>
+                </div>
 
-              <div class="h-field">
-                <label class="h-lbl">Profil d'accessibilité</label>
-                <select v-model="form.handicap_id" class="h-inp">
-                 <option value="">— Choisir —</option>
-                  <option v-for="h in handicaps" :key="h.id" :value="h.id">{{ h.name }}</option>
-                </select>
+                <div class="h-field">
+                  <label class="h-lbl">Profil d'accessibilité</label>
+                  <select v-model="form.handicap_id" class="h-inp">
+                    <option value="">— Choisir —</option>
+                    <option v-for="h in handicaps" :key="h.id" :value="h.id">{{ h.name }}</option>
+                  </select>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div class="h-modal-foot">
-            <button class="h-btn h-btn-ghost" @click="showForm = false">Annuler</button>
-            <button
-              class="h-btn h-btn-primary"
-              @click="submitForm"
-              :disabled="!form.name.trim() || !form.prenom.trim() || !form.classe_id"
-            >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+            <div class="h-modal-foot">
+              <button class="h-btn h-btn-ghost" @click="showForm = false">Annuler</button>
+              <button
+                class="h-btn h-btn-primary"
+                @click="submitForm"
+                :disabled="!form.name.trim() || !form.prenom.trim() || !form.classe_id"
               >
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-              {{ editTarget ? 'Enregistrer' : 'Inscrire' }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </Teleport>
-
-    <!-- ══ MODALE SUPPRESSION ══ -->
-    <Teleport v-if="showDelete" to="body">
-      <div class="h-overlay" @click.self="showDelete = false">
-        <div class="h-modal">
-          <div class="h-modal-head">
-            <h2 class="h-modal-title">Supprimer cet élève ?</h2>
-            <button class="h-close-btn" @click="showDelete = false">
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.5"
-                stroke-linecap="round"
-              >
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
-          </div>
-
-          <div class="h-modal-body" style="text-align: center">
-            <div style="margin-bottom: 14px">
-              <svg
-                width="40"
-                height="40"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#DC2626"
-                stroke-width="1.8"
-                stroke-linecap="round"
-              >
-                <path
-                  d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
-                />
-                <line x1="12" y1="9" x2="12" y2="13" />
-                <line x1="12" y1="17" x2="12.01" y2="17" />
-              </svg>
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                {{ editTarget ? 'Enregistrer' : 'Inscrire' }}
+              </button>
             </div>
-            <p style="color: #64748b; margin: 0; line-height: 1.6">
-              Supprimer <strong>{{ deleteTarget?.name }} {{ deleteTarget?.prenom }}</strong> ?<br />
-              Cette action est irréversible.
-            </p>
-          </div>
-
-          <div class="h-modal-foot">
-            <button class="h-btn h-btn-ghost" @click="showDelete = false">Annuler</button>
-            <button class="h-btn h-btn-danger" @click="doDelete">
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <polyline points="3 6 5 6 21 6" />
-                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                <path d="M10 11v6M14 11v6" />
-              </svg>
-              Supprimer définitivement
-            </button>
           </div>
         </div>
-      </div>
-    </Teleport>
-  </section>
+      </Teleport>
+
+      <!-- ══ MODALE SUPPRESSION ══ -->
+      <Teleport v-if="showDelete" to="body">
+        <div class="h-overlay" @click.self="showDelete = false">
+          <div class="h-modal">
+            <div class="h-modal-head">
+              <h2 class="h-modal-title">Supprimer cet élève ?</h2>
+              <button class="h-close-btn" @click="showDelete = false">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+
+            <div class="h-modal-body" style="text-align: center">
+              <div style="margin-bottom: 14px">
+                <svg
+                  width="40"
+                  height="40"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#DC2626"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                >
+                  <path
+                    d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
+                  />
+                  <line x1="12" y1="9" x2="12" y2="13" />
+                  <line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg>
+              </div>
+              <p style="color: #64748b; margin: 0; line-height: 1.6">
+                Supprimer
+                <strong>{{ deleteTarget?.name }} {{ deleteTarget?.prenom }}</strong> ?<br />
+                Cette action est irréversible.
+              </p>
+            </div>
+
+            <div class="h-modal-foot">
+              <button class="h-btn h-btn-ghost" @click="showDelete = false">Annuler</button>
+              <button class="h-btn h-btn-danger" @click="doDelete">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="3 6 5 6 21 6" />
+                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                  <path d="M10 11v6M14 11v6" />
+                </svg>
+                Supprimer définitivement
+              </button>
+            </div>
+          </div>
+        </div>
+      </Teleport>
+    </section>
   </div>
 </template>
 
@@ -703,7 +711,7 @@ onMounted(async () => {
   background: rgba(220, 38, 38, 0.06);
 }
 
-/* ── Modales ── */
+/*  Modales ── */
 .h-overlay {
   position: fixed;
   inset: 0;

@@ -60,7 +60,7 @@ const apiRegisterEnseignant = async () => {
       email: formData.value.email,
       numero: formData.value.numero,
       matricule: formData.value.matricule,
-      ecole_id: 1,
+      ecole_id: userAuth.value?.data?.id,
     })
 
     infoOfRegister.value = response

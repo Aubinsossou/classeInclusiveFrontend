@@ -68,7 +68,7 @@ onMounted(async () => {
   await apiGetUser()
   await apiGetListeEnseignant(userAuth.value?.data?.id)
   await apiGetEleves(userAuth.value?.data?.id)
-  await apiGEtListeClasse(userAuth.value?.data.id)
+  await apiGEtListeClasse(userAuth.value?.data?.id)
   await apiGetMatieres(userAuth.value?.data?.id)
   await apiGetHandicaps()
   loading.value = false
@@ -450,7 +450,7 @@ onMounted(async () => {
           <div v-else>Aucun enseignant pour l'instant</div>
         </div>
 
-        <div class="panels-card panels-grid-content-eleve">
+        <!-- <div class="panels-card panels-grid-content-eleve">
           <div class="en-tete-card">
             <div class="en-tete-card-icon">
               <span style="width: 40px; height: 20px; display: inline-block; margin-right: 5px"
@@ -460,7 +460,6 @@ onMounted(async () => {
                   viewBox="0 0 48 48"
                   fill="none"
                 >
-                  <!-- Fond arrondi (plus transparent) -->
                   <rect
                     x="4"
                     y="4"
@@ -471,10 +470,8 @@ onMounted(async () => {
                     fill-opacity="0.15"
                   />
 
-                  <!-- Tête -->
                   <circle cx="24" cy="20" r="4" stroke="#7C3AED" stroke-width="2.5" fill="none" />
 
-                  <!-- Épaules -->
                   <path
                     d="M16 32c0-4 3.5-6 8-6s8 2 8 6"
                     stroke="#7C3AED"
@@ -513,7 +510,7 @@ onMounted(async () => {
               style="width: 100%; background-color: red; height: 7px"
             ></progress
           ></span>
-        </div>
+        </div> -->
 
         <div class="panels-card panels-grid-content-classe">
           <div class="en-tete-card">
@@ -525,7 +522,7 @@ onMounted(async () => {
                   viewBox="0 0 48 48"
                   fill="none"
                 >
-                  <!-- Fond arrondi -->
+                 
                   <rect x="4" y="4" width="40" height="40" rx="10" fill="#D1FAE5" />
                   <!-- Toit -->
                   <path
@@ -536,7 +533,7 @@ onMounted(async () => {
                     stroke-linejoin="round"
                     fill="none"
                   />
-                  <!-- Corps de la maison -->
+                 
                   <path
                     d="M18 22V32H30V22"
                     stroke="#059669"
@@ -545,7 +542,7 @@ onMounted(async () => {
                     stroke-linejoin="round"
                     fill="none"
                   />
-                  <!-- Porte -->
+                 
                   <rect
                     x="22"
                     y="26"

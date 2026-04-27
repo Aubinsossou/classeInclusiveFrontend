@@ -15,6 +15,7 @@ import adminDashboard from '../views/admin/adminDashboard.vue'
 import MatiereView from '../views/admin/adminMatiere.vue'
 import EnseignantDashboard from '../views/enseignant/enseignantDashboard.vue'
 import EcoleLogin from '@/views/admin/EcoleLogin.vue'
+import EleveBilan from '@/views/enseignant/EleveBilan.vue'
 
 // ── Imports espace élève ────────────────────────────────
 import EleveLogin      from '@/views/eleve/LoginView.vue'
@@ -121,8 +122,14 @@ const router = createRouter({
       component: EnseignantQuizz,
       meta: { role: 'enseignant', requiresEnseignantAuth: true }
     },
+    {
+      path: '/enseignant/cours/bilan',
+      name: 'enseignantcoursbilan',
+      component: EleveBilan,
+      meta: { role: 'enseignant', requiresEnseignantAuth: true }
+    },
 
-    // ── Espace élève ──────────────────────────────────────
+    //  Espace élève 
     { path: '/eleve/login',                                                          name: 'EleveLogin',    component: EleveLogin },
     { path: '/eleve/dashboard',                                                name: 'Dashboard',     component: EleveDashboard,  meta: { role: 'eleve', requiresEleveAuth: true } },
     { path: '/eleve/subject/:subjectId/courses',                               name: 'Courses',       component: EleveCourses,    meta: { role: 'eleve', requiresEleveAuth: true }, props: true },
@@ -144,25 +151,25 @@ router.beforeEach((to) => {
   const token = localStorage.getItem('access_token')
   const role  = localStorage.getItem('role')
 
-  // ── Guard élève ──────────────────────────────────────
+  //  Guard élève 
   if (to.meta.requiresEleveAuth) {
     if (!token || role !== 'eleve') return { name: 'EleveLogin' }
   }
 
-  // ── Guard école / enseignant ─────────────────────────
+  //  Guard école / enseignant 
   if (!token) {
     if (to.meta.requiresEcoleAuth)      return { name: 'ecoleLogin' }
     if (to.meta.requiresEnseignantAuth) return { name: 'enseignantlogin' }
   }
 
-  // ── Redirection si déjà connecté ────────────────────
+  //  Redirection si déjà connecté 
   if (token && (to.name === 'ecoleLogin' || to.name === 'enseignantlogin' || to.name === 'ecoleRegister' || to.name === 'EleveLogin')) {
     if (role === 'ecole')       return { name: 'adminDashboard' }
     if (role === 'enseignant')  return { name: 'enseignantDashboard' }
     if (role === 'eleve')       return { name: 'Dashboard' }
   }
 
-  // ── Mauvais rôle sur une route protégée ─────────────
+  //  Mauvais rôle sur une route protégée 
   if (to.meta.role && to.meta.role !== role) {
     if (role === 'ecole')      return { name: 'adminDashboard' }
     if (role === 'enseignant') return { name: 'enseignantDashboard' }

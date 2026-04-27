@@ -54,7 +54,7 @@ function formatDate(d) {
   return new Date(d).toLocaleDateString('fr-FR')
 }
 
-// is_connect peut être string "true"/"false" ou boolean
+// Eleve connecter
 function isOnline(eleve) {
   return eleve.is_connect === true || eleve.is_connect === 'true'
 }
