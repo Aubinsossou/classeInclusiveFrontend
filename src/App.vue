@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import HeaderEcole from '@/components/admin/header.vue'
 import HeaderEnseignant from '@/components/admin/HeaderEnseignant.vue'
+import HeaderClient from '@/components/client/HeaderClient.vue'
 
 const route = useRoute()
 const role = localStorage.getItem('role')
@@ -15,6 +16,8 @@ const currentHeader = computed(() => {
       return HeaderEcole
     case 'eleve':
       return null
+    case 'client':
+      return HeaderClient
     default:
       return null
   }

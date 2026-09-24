@@ -147,7 +147,6 @@ onMounted(async () => {
             <div class="stat-card-content-card-1-footer">Créer cette année</div>
           </div>
           <div class="position-relative">
-            <span class="top-0 sc-trend">+2 ce mois</span>
             <div class="position-absolute bottom-0 end-0">
               <a href="/ecole/enseignant"
                 >Gérer
@@ -227,7 +226,6 @@ onMounted(async () => {
             <div class="stat-card-content-card-1-footer">Créer cette année</div>
           </div>
           <div class="position-relative">
-            <span class="top-0 sc-trend">+2 ce mois</span>
             <div class="position-absolute bottom-0 end-0">
               <a href="/ecole/classe" style="color: #059669"
                 >Gérer
@@ -296,11 +294,6 @@ onMounted(async () => {
             <div class="stat-card-content-card-1-footer">Créer cette année</div>
           </div>
           <div class="position-relative">
-            <span
-              class="top-0 sc-trend"
-              style="color: #7c3aed; background-color: rgba(124, 58, 237, 0.09)"
-              >+2 ce mois</span
-            >
             <div class="position-absolute bottom-0 end-0">
               <a href="/ecole/matiere" style="color: #7c3aed"
                 >Gérer
@@ -358,11 +351,6 @@ onMounted(async () => {
             <div class="stat-card-content-card-1-footer">Créer cette année</div>
           </div>
           <div class="position-relative">
-            <span
-              class="top-0 sc-trend"
-              style="color: #d97706; background-color: rgba(124, 58, 237, 0.09)"
-              >+2 ce mois</span
-            >
             <div class="position-absolute bottom-0 end-0">
               <a href="/ecole/eleve" style="color: #d97706"
                 >Gérer
