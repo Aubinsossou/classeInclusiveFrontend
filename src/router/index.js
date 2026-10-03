@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
-import Home from '@/views/Login.vue'
+import LandingPage from '@/views/public/LandingPage.vue'
 import EcoleClasse from '@/views/admin/adminClasse.vue'
 import Cours from '@/views/enseignant/Cours.vue'
 import EnseignantEleve from '@/views/enseignant/Student.vue'
@@ -48,8 +48,9 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      name: 'home',
-      component: Home,
+      name: 'landing',
+      component: LandingPage,
+      meta: { public: true },
     },
     {
       path: '/ecole/register',
@@ -189,18 +190,23 @@ router.beforeEach((to) => {
     if (!token || role !== 'client') return { name: 'ClientLogin' }
   }
 
-  //  Guard école / enseignant 
-  if (!token) {
-    if (to.meta.requiresEcoleAuth)      return { name: 'ecoleLogin' }
-    if (to.meta.requiresEnseignantAuth) return { name: 'enseignantlogin' }
+  //  Guard école / enseignant (token + rôle strict : un rôle ne traverse jamais l'autre espace)
+  if (to.meta.requiresEcoleAuth) {
+    if (!token || role !== 'ecole') return { name: 'ecoleLogin' }
+  }
+  if (to.meta.requiresEnseignantAuth) {
+    if (!token || role !== 'enseignant') return { name: 'enseignantlogin' }
   }
 
-  //  Redirection si déjà connecté 
-  if (token && (to.name === 'ecoleLogin' || to.name === 'enseignantlogin' || to.name === 'ecoleRegister' || to.name === 'EleveLogin' || to.name === 'ClientLogin' || to.name === 'ClientRegister')) {
-    if (role === 'ecole')       return { name: 'adminDashboard' }
-    if (role === 'enseignant')  return { name: 'enseignantDashboard' }
-    if (role === 'eleve')       return { name: 'Dashboard' }
-    if (role === 'client')      return { name: 'ClientDashboard' }
+  //  Redirection si déjà connecté — même rôle uniquement.
+  // La landing doit mener purement et simplement vers le login/register demandé :
+  // /enseignant/login, /ecole/login et /ecole/register restent affichés même avec une session client active.
+  // Seul le login client déjà connecté en tant que client redirige vers le dashboard client.
+  if (token) {
+    if ((to.name === 'ClientLogin' || to.name === 'ClientRegister') && role === 'client') return { name: 'ClientDashboard' }
+    if ((to.name === 'ecoleLogin' || to.name === 'ecoleRegister') && role === 'ecole') return { name: 'adminDashboard' }
+    if (to.name === 'enseignantlogin' && role === 'enseignant') return { name: 'enseignantDashboard' }
+    if (to.name === 'EleveLogin' && role === 'eleve') return { name: 'Dashboard' }
   }
 
   //  Mauvais rôle sur une route protégée 

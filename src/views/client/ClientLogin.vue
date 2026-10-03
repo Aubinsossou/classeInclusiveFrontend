@@ -50,7 +50,7 @@ async function submit() {
         <input id="c-pass" v-model="password" type="password" class="pro-input" placeholder="••••••••" autocomplete="current-password" required />
         <button class="pro-btn pro-btn-primary pro-btn-lg cl-submit" :disabled="busy">{{ busy ? 'Connexion…' : 'Se connecter' }}</button>
       </form>
-      <p class="cl-foot">Pas de compte ? <RouterLink :to="{ name: 'ClientRegister' }">Créer un compte</RouterLink></p>
+      <p class="cl-foot">Compte attribué par l’administrateur — aucune inscription publique.</p>
     </div></div>
   </div>
 </template>
