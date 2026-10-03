@@ -57,4 +57,13 @@ onMounted(load)
 .pf-list{text-align:left;display:flex;flex-direction:column}
 .pf-row{display:flex;justify-content:space-between;gap:12px;padding:10px 4px;border-top:1px solid #f1f5f9;font-size:.85rem}
 .pf-row dt{font-weight:700;color:#475569}.pf-row dd{color:#0f172a;word-break:break-word;text-align:right}
+
+/* ══ Responsive ══ */
+@media (max-width: 480px) {
+  .container{padding:0 14px 32px}
+  .pf-card{padding:20px 16px}
+  .pf-row{flex-direction:column;gap:2px}
+  .pf-row dd{text-align:left}
+  .pf-err{flex-direction:column;align-items:stretch}
+}
 </style>

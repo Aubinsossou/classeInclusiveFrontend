@@ -387,7 +387,7 @@ onMounted(async () => {
 /* ── Grille ─────────────────────────────────────── */
 .subjects-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(190px, 100%), 1fr));
   gap: 14px;
 }
 
@@ -540,13 +540,16 @@ onMounted(async () => {
 }
 
 .form_container {
-  width: 550px;
-  margin: 0 auto;
+  width: 100%;
+  max-width: 550px;
+  margin: auto;
   border-radius: 40px;
   color: #1a2b5e;
   font-family: 'Nunito', sans-serif;
   padding: 10px;
   background-color: #fff;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
 }
 .form_banner {
   display: flex;
@@ -661,6 +664,8 @@ onMounted(async () => {
 .modal-overlay {
   position: fixed;
   z-index: 1000;
+  padding: 16px;
+  overflow-y: auto;
   background-color: #1a2b5e8c;
   top: 0;
   left: 0;
@@ -674,6 +679,8 @@ onMounted(async () => {
 .modal-delete-overlay {
   position: fixed;
   z-index: 1000;
+  padding: 16px;
+  overflow-y: auto;
   background-color: #1a2b5e8c;
   top: 0;
   left: 0;
@@ -687,6 +694,8 @@ onMounted(async () => {
 .modal-third-overlay {
   position: fixed;
   z-index: 1000;
+  padding: 16px;
+  overflow-y: auto;
   background-color: #1a2b5e8c;
   top: 0;
   left: 0;
@@ -699,13 +708,16 @@ onMounted(async () => {
 }
 
 .classes_container {
-  width: 430px;
-  margin: 0 auto;
+  width: 100%;
+  max-width: 430px;
+  margin: auto;
   border-radius: 40px;
   color: #1a2b5e;
   font-family: 'Nunito', sans-serif;
   padding: 20px;
   background-color: #fff;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
 }
 .classes_banner {
   display: flex;
@@ -732,5 +744,16 @@ onMounted(async () => {
 .delete_body_svg {
   height: 100px;
   width: 100px;
+}
+
+/* ══ Responsive ══ */
+@media (max-width: 640px) {
+  .form_grid { grid-template-columns: 1fr; }
+  .form_container,
+  .classes_container { border-radius: 24px; }
+  .form_banner,
+  .classes_banner { flex-wrap: wrap; gap: 8px; }
+  .classes_container { padding: 14px; }
+  .delete_body_svg { height: 70px; width: 70px; }
 }
 </style>

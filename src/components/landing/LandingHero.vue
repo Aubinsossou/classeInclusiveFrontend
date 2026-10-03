@@ -56,4 +56,12 @@ h1 span{background:linear-gradient(90deg,#2563eb,#6d28d9);-webkit-background-cli
 .ld-mock-voice{font-weight:800;margin-bottom:4px}
 .ld-mock-small .ld-mock-cap{color:rgba(255,255,255,.7)}
 @media(max-width:900px){.ld-hero-grid{grid-template-columns:1fr}h1{font-size:2rem}}
+@media(max-width:480px){
+  .ld-hero{padding:28px 14px 8px}
+  h1{font-size:1.6rem}
+  .ld-sub{font-size:.95rem}
+  .ld-mock-card{padding:14px}
+  .ld-mock-row{flex-direction:column;align-items:flex-start;gap:2px}
+  .ld-cta .pro-btn{width:100%;justify-content:center}
+}
 </style>

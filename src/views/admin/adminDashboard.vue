@@ -86,13 +86,11 @@ onMounted(async () => {
         <div class="tableau-bord-content-left">
           <div>
             <p>{{ userAuth?.data?.name }}</p>
-            <h1 style="font-weight: 900; font-family: 'Baloo 2', cursive; font-size: 2rem">
-              Tableau de bord
-            </h1>
+            <h1 class="tbc-title">Tableau de bord</h1>
             <p>{{ dateActuelle() }}</p>
           </div>
-           <div class="tableau-bord-content-right" style="height: 200px; width: 350px">
-              <img src="@/assets/images/logo_classe_inclusive.png" alt="" style="width: 100%" />
+           <div class="tableau-bord-content-right tbc-hero-img">
+              <img src="@/assets/images/logo_classe_inclusive.png" alt="Logo Classe Inclusive" />
             </div>
         </div>
       </div>
@@ -588,10 +586,7 @@ onMounted(async () => {
               <span class="en-tete-card-title">Action rapide</span>
             </div>
           </div>
-          <div
-            class="card-body-action"
-            style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px"
-          >
+          <div class="card-body-action card-body-action-grid">
             <div>
               <a href="/ecole/enseignant" class="card-body-action card-body-action-1">
                 <div>
@@ -720,6 +715,8 @@ onMounted(async () => {
 
 .tableau-bord-content-left {
   display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
   padding: 32px 40px;
   justify-content: space-between;
   background: linear-gradient(140deg, #1a2b5e, #2e4080);
@@ -732,8 +729,8 @@ onMounted(async () => {
 
 .stat-card-content {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 50px;
+  grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+  gap: clamp(16px, 3vw, 50px);
   margin: 30px 0;
 }
 .stat-card-content-card {
@@ -881,8 +878,8 @@ onMounted(async () => {
 
 .panels-grid-content {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: 50px;
+  grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr));
+  gap: clamp(16px, 3vw, 50px);
 }
 .panels-card {
   background-color: #fff;
@@ -1080,5 +1077,64 @@ onMounted(async () => {
   background: #d97706;
   padding: 10px;
   transition: transform 0.3s ease;
+}
+
+/* Titre de l'en-tête de tableau de bord */
+.tbc-title {
+  font-weight: 900;
+  font-family: 'Baloo 2', cursive;
+  font-size: 2rem;
+  line-height: 1.15;
+}
+
+/* Grille d'actions rapides : s'adapte à la largeur disponible */
+.card-body-action-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr));
+  gap: 16px;
+  align-items: stretch;
+}
+
+/* ══ Responsive ══ */
+@media (max-width: 900px) {
+  .tableau-bord-content-left {
+    padding: 24px;
+    border-radius: 28px;
+  }
+  .stat-card-content {
+    margin: 22px 0;
+  }
+  .tbc-title {
+    font-size: 1.7rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .tableau-bord-content {
+    margin: 18px 0;
+  }
+  .tableau-bord-content-left {
+    padding: 20px 18px;
+    border-radius: 22px;
+    gap: 16px;
+    justify-content: center;
+    text-align: center;
+  }
+  .tbc-title {
+    font-size: 1.45rem;
+  }
+  .panels-card {
+    border-radius: 22px;
+    padding: 16px 14px;
+  }
+  .en-tete-card {
+    margin-bottom: 18px;
+  }
+  .card-body-action-grid {
+    grid-template-columns: 1fr;
+  }
+  .card-body {
+    padding: 8px 4px;
+  }
 }
 </style>

@@ -68,4 +68,11 @@ function close() { open.value = false; loginOpen.value = false }
 .ld-mobile-logins{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding-top:10px;font-size:.8rem;color:var(--pro-muted)}
 .ld-mobile-logins a{background:#f1f5f9;border-radius:99px;padding:6px 12px;font-weight:700;color:var(--pro-blue);text-decoration:none}
 @media(max-width:900px){.ld-links{display:none}.ld-burger{display:block}.ld-actions{margin-left:auto}}
+@media(max-width:640px){
+  .ld-nav-inner{padding:10px 14px;gap:10px}
+  .ld-brand-txt{font-size:.9rem}
+  /* Les deux boutons d'action ne tiennent pas sur un petit écran :
+     les accès restent disponibles dans le menu déroulant (ld-mobile). */
+  .ld-actions .pro-btn{display:none}
+}
 </style>

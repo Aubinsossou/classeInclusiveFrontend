@@ -617,7 +617,8 @@ section {
 }
 
 .container {
-  width: 1200px;
+  width: 100%;
+  max-width: 1200px;
   margin: 0 auto;
 }
 
@@ -637,7 +638,8 @@ section {
 }
 
 .search-bar {
-  width: 45%;
+  width: 100%;
+  max-width: 420px;
   padding-left: 15px;
   margin-bottom: 20px;
   font-family: 'Nunito', sans-serif;
@@ -779,13 +781,16 @@ td {
 }
 
 .form_container {
-  width: 550px;
-  margin: 0 auto;
+  width: 100%;
+  max-width: 550px;
+  margin: auto;
   border-radius: 40px;
   color: #1a2b5e;
   font-family: 'Nunito', sans-serif;
   padding: 10px;
   background-color: #fff;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
 }
 
 .form_banner {
@@ -891,6 +896,8 @@ td {
 .modal-overlay {
   position: fixed;
   z-index: 1000;
+  padding: 16px;
+  overflow-y: auto;
   background-color: #1a2b5e8c;
   top: 0;
   left: 0;
@@ -905,6 +912,8 @@ td {
 .modal-second-overlay {
   position: fixed;
   z-index: 1000;
+  padding: 16px;
+  overflow-y: auto;
   background-color: #1a2b5e8c;
   top: 0;
   left: 0;
@@ -917,13 +926,16 @@ td {
 }
 
 .classes_container {
-  width: 430px;
-  margin: 0 auto;
+  width: 100%;
+  max-width: 430px;
+  margin: auto;
   border-radius: 40px;
   color: #1a2b5e;
   font-family: 'Nunito', sans-serif;
   padding: 20px;
   background-color: #fff;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
 }
 
 .classes_banner {
@@ -995,6 +1007,8 @@ td {
 .modal-third-overlay {
   position: fixed;
   z-index: 1000;
+  padding: 16px;
+  overflow-y: auto;
   background-color: #1a2b5e8c;
   top: 0;
   left: 0;
@@ -1021,6 +1035,8 @@ td {
 .modal-delete-overlay {
   position: fixed;
   z-index: 1000;
+  padding: 16px;
+  overflow-y: auto;
   background-color: #1a2b5e8c;
   top: 0;
   left: 0;
@@ -1030,5 +1046,16 @@ td {
   justify-content: center;
   align-items: center;
   backdrop-filter: blur(10px);
+}
+
+/* ══ Responsive ══ */
+@media (max-width: 640px) {
+  .form_grid { grid-template-columns: 1fr; }
+  .form_container,
+  .classes_container { border-radius: 24px; }
+  .form_banner,
+  .classes_banner { flex-wrap: wrap; gap: 8px; }
+  .classes_container { padding: 14px; }
+  .delete_body_svg { height: 70px; width: 70px; }
 }
 </style>

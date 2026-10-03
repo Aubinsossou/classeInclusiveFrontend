@@ -138,13 +138,13 @@ onMounted(() => { load() })
 .dash-date{font-size:.75rem;font-weight:700;color:#94a3b8}
 .dash-sub{font-size:.83rem;color:#94a3b8}
 .dash-err{padding:22px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
-.dash-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:18px}
+.dash-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(160px,100%),1fr));gap:14px;margin-bottom:18px}
 .dash-card{padding:18px;display:flex;flex-direction:column;gap:10px}
 .dash-n{font-size:2rem;font-weight:900;color:#0f172a;line-height:1}
 .dash-hand{padding:20px;margin-bottom:14px}
 .dash-hand h2{font-size:1rem;font-weight:800;margin-bottom:10px;color:#0f172a}
 .dash-big{font-size:1.8rem;font-weight:900;color:#0f172a}
-.dash-two{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:14px}
+.dash-two{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr));gap:14px;margin-bottom:14px}
 .bars{display:flex;flex-direction:column;gap:8px}
 .bar-row{display:grid;grid-template-columns:minmax(90px,180px) 1fr auto;gap:10px;align-items:center}
 .bar-label{font-size:.8rem;font-weight:700;color:#334155;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

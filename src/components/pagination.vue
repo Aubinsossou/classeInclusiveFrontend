@@ -57,7 +57,10 @@ const pages = computed(() => {
 <style scoped>
 .pagination {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 8px;
+  max-width: 100%;
 }
 
 button {
@@ -65,6 +68,13 @@ button {
   border: 1px solid #aaa;
   background: white;
   cursor: pointer;
+  flex-shrink: 0;
+}
+
+@media (max-width: 480px) {
+  button {
+    padding: 6px 9px;
+  }
 }
 
 button[disabled] {

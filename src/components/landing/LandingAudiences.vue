@@ -79,4 +79,11 @@ h2{font-size:1.6rem;color:var(--pro-ink);letter-spacing:-.02em;margin-bottom:12p
 .ld-foot a:hover{color:#fff}
 .ld-foot-bar{border-top:1px solid rgba(255,255,255,.08);padding:14px 20px;text-align:center;font-size:.75rem;color:#64748b}
 @media(max-width:900px){.ld-grid4,.ld-cols,.ld-cta-card,.ld-foot-grid{grid-template-columns:1fr}}
+@media(max-width:480px){
+  .ld-sec{padding:20px 14px}
+  h2{font-size:1.35rem}
+  .ld-aud{padding:16px}
+  .ld-cta-card{padding:20px 16px}
+  .ld-foot-grid{padding:24px 14px}
+}
 </style>

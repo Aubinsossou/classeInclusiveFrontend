@@ -823,6 +823,8 @@ const formatDate = (d) => {
   padding: 24px;
   max-width: 420px;
   width: 100%;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
 }
 .modal-header {
@@ -891,6 +893,7 @@ const formatDate = (d) => {
   font-weight: 700;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
   pointer-events: none;
+  max-width: calc(100vw - 32px);
 }
 .toast--success {
   background: #ecfdf5;

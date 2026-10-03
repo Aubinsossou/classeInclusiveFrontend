@@ -47,7 +47,7 @@ onMounted(load)
 .strip-title{font-size:.92rem;font-weight:800;color:#0f172a}
 .strip-state{font-size:.82rem;color:#94a3b8;font-weight:600}
 .strip-err{color:#dc2626;background:rgba(220,38,38,.07);border:1px solid rgba(220,38,38,.18);border-radius:10px;padding:8px 12px}
-.strip-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.strip-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(130px,100%),1fr));gap:10px}
 .strip-item{display:flex;flex-direction:column;gap:2px;background:#f8fafc;border:1px solid #eef2f7;border-radius:12px;padding:10px 12px}
 .strip-label{font-size:.7rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.03em}
 .strip-value{font-size:1.25rem;font-weight:900;color:#0f172a;line-height:1.1}

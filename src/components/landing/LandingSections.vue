@@ -71,4 +71,9 @@ h2{font-size:1.6rem;color:var(--pro-ink);letter-spacing:-.02em;margin-bottom:6px
 .ld-link:hover{text-decoration:underline}
 .ld-hint{font-size:.76rem;color:var(--pro-muted);margin-top:10px}
 @media(max-width:900px){.ld-cols,.ld-grid,.ld-grid3,.ld-steps{grid-template-columns:1fr}}
+@media(max-width:480px){
+  .ld-sec{padding:20px 14px}
+  h2{font-size:1.35rem}
+  .ld-col,.ld-steps li,.ld-feat,.ld-grid3 article{padding:16px}
+}
 </style>

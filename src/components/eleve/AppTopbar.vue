@@ -270,6 +270,16 @@ onMounted(async () => {
 }
 
 @media (max-width: 760px) {
+  .app-topbar {
+    padding: 0 14px;
+    gap: 10px;
+    height: 64px;
+  }
+  .at-left {
+    min-width: 0;
+    flex-shrink: 1;
+    overflow: hidden;
+  }
   .at-pts-bar-wrap {
     display: none;
   }
@@ -279,14 +289,20 @@ onMounted(async () => {
   .at-brand {
     display: none;
   }
-  .at-page {
-    display: none;
-  }
   .at-btn-label {
     display: none;
   }
   .at-btn {
     padding: 11px 14px;
+  }
+}
+
+@media (max-width: 520px) {
+  .at-center {
+    display: none;
+  }
+  .at-page {
+    max-width: 120px;
   }
 }
 </style>
