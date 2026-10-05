@@ -31,15 +31,6 @@ import { audiences, techList, footerAccess } from '@/data/landingContent.js'
     </div>
   </section>
 
-  <section id="tech" class="ld-sec" aria-labelledby="t-tech">
-    <p class="ld-kicker">Sécurité et technologies</p>
-    <h2 id="t-tech">Une architecture lisible et des accès encadrés</h2>
-    <div class="ld-cols">
-      <div class="pro-card ld-col"><h3>Gestion des accès</h3><p>La consultation de chaque espace nécessite une authentification, un jeton de session et un rôle vérifié. Les routes sécurisées redirigent systématiquement les accès non autorisés vers l’authentification correspondante. Cette page de présentation ne sollicite aucune API et n’expose aucune donnée.</p></div>
-      <div class="pro-card ld-col"><h3>Environnement technique</h3><ul class="ld-tech"><li v-for="t in techList" :key="t.name"><strong>{{ t.name }}</strong><span>{{ t.detail }}</span></li></ul></div>
-    </div>
-  </section>
-
   <footer class="ld-foot">
     <div class="ld-foot-grid">
       <div><p class="ld-foot-brand">Classe Inclusive</p><p>Plateforme numérique au service de l’inclusion scolaire : structuration des informations, accompagnement des acteurs éducatifs et prise en compte des besoins de chaque élève.</p><p class="ld-foot-small">Projet numérique éducatif — page de présentation publique et espaces sécurisés.</p></div>
