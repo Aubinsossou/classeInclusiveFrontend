@@ -17,5 +17,5 @@ import LandingAudiences from '@/components/landing/LandingAudiences.vue'
 </template>
 
 <style scoped>
-.ld-page{background:#f8fafc;min-height:100vh;font-family:'Plus Jakarta Sans','Nunito',sans-serif}
+.ld-page{background:#f8fafc;min-height:100vh;font-family:var(--font-b)}
 </style>

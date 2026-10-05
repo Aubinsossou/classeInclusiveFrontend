@@ -47,7 +47,7 @@ import { problemsSolutions, features, steps, previewCards } from '@/data/landing
 </template>
 
 <style scoped>
-.ld-sec{max-width:1180px;margin:0 auto;padding:26px 20px;scroll-margin-top:76px}
+.ld-sec{max-width:1200px;margin:0 auto;padding:26px 20px;scroll-margin-top:76px}
 .ld-kicker{font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--pro-blue);margin-bottom:6px}
 h2{font-size:1.6rem;color:var(--pro-ink);letter-spacing:-.02em;margin-bottom:6px}
 .ld-lead{color:var(--pro-muted);font-size:.88rem;margin-bottom:16px}
@@ -72,7 +72,7 @@ h2{font-size:1.6rem;color:var(--pro-ink);letter-spacing:-.02em;margin-bottom:6px
 .ld-hint{font-size:.76rem;color:var(--pro-muted);margin-top:10px}
 @media(max-width:900px){.ld-cols,.ld-grid,.ld-grid3,.ld-steps{grid-template-columns:1fr}}
 @media(max-width:480px){
-  .ld-sec{padding:20px 14px}
+  .ld-sec{padding:20px 20px}
   h2{font-size:1.35rem}
   .ld-col,.ld-steps li,.ld-feat,.ld-grid3 article{padding:16px}
 }

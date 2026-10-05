@@ -36,7 +36,7 @@ import { heroContent, stackBadges } from '@/data/landingContent.js'
 </template>
 
 <style scoped>
-.ld-hero{max-width:1180px;margin:0 auto;padding:44px 20px 10px}
+.ld-hero{max-width:1200px;margin:0 auto;padding:44px 20px 10px}
 .ld-hero-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:28px;align-items:start}
 .ld-badge{display:inline-block;background:var(--pro-blue-soft);color:var(--pro-blue);border-radius:99px;padding:6px 14px;font-size:.75rem;font-weight:800;margin-bottom:14px}
 h1{font-size:2.6rem;line-height:1.08;letter-spacing:-.02em;color:var(--pro-ink);margin-bottom:12px}
@@ -57,7 +57,7 @@ h1 span{background:linear-gradient(90deg,#2563eb,#6d28d9);-webkit-background-cli
 .ld-mock-small .ld-mock-cap{color:rgba(255,255,255,.7)}
 @media(max-width:900px){.ld-hero-grid{grid-template-columns:1fr}h1{font-size:2rem}}
 @media(max-width:480px){
-  .ld-hero{padding:28px 14px 8px}
+  .ld-hero{padding:28px 20px 8px}
   h1{font-size:1.6rem}
   .ld-sub{font-size:.95rem}
   .ld-mock-card{padding:14px}

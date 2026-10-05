@@ -42,7 +42,7 @@ import { audiences, techList, footerAccess } from '@/data/landingContent.js'
 </template>
 
 <style scoped>
-.ld-sec{max-width:1180px;margin:0 auto;padding:26px 20px;scroll-margin-top:76px}
+.ld-sec{max-width:1200px;margin:0 auto;padding:26px 20px;scroll-margin-top:76px}
 .ld-kicker{font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--pro-blue);margin-bottom:6px}
 h2{font-size:1.6rem;color:var(--pro-ink);letter-spacing:-.02em;margin-bottom:12px}
 .ld-grid4{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
@@ -59,8 +59,12 @@ h2{font-size:1.6rem;color:var(--pro-ink);letter-spacing:-.02em;margin-bottom:12p
 .ld-col{padding:20px}.ld-col h3{margin-bottom:8px}.ld-col p{font-size:.85rem;color:var(--pro-sub);line-height:1.65}
 .ld-tech{list-style:none;padding:0;display:flex;flex-direction:column;gap:8px}
 .ld-tech li{display:flex;flex-direction:column;font-size:.84rem}.ld-tech span{color:var(--pro-muted);font-size:.76rem}
+/* Géométrie alignée sur le header Client (#header-client) : pleine largeur,
+   aucun max-width, aucune marge auto, padding-inline 28px.
+   L'espace au-dessus du footer est conservé (margin-top + padding de #acces).
+   En revanche le bas du footer reste collé au bas de l'écran (voir .ld-foot-bar). */
 .ld-foot{background:#0f172a;color:#cbd5e1;margin-top:26px}
-.ld-foot-grid{max-width:1180px;margin:0 auto;padding:30px 20px;display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:18px}
+.ld-foot-grid{padding:30px 28px;display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:18px}
 .ld-foot-brand{color:#fff;font-weight:900;font-size:1.1rem;margin-bottom:8px}
 .ld-foot p{font-size:.82rem;line-height:1.6}
 .ld-foot-small{color:#64748b;margin-top:8px}
@@ -68,13 +72,16 @@ h2{font-size:1.6rem;color:var(--pro-ink);letter-spacing:-.02em;margin-bottom:12p
 .ld-foot nav{display:flex;flex-direction:column;gap:6px}
 .ld-foot a{color:#cbd5e1;text-decoration:none;font-size:.83rem}
 .ld-foot a:hover{color:#fff}
-.ld-foot-bar{border-top:1px solid rgba(255,255,255,.08);padding:14px 20px;text-align:center;font-size:.75rem;color:#64748b}
+/* margin:0 explicite — le reboot Bootstrap (p{margin-bottom:1rem}, spécificité 0-0-1)
+   l'emporte sur le reset universel *{margin:0} (0-0-0) et créait une bande de
+   ~16px sous le footer : le footer n'était plus collé au bas de l'écran. */
+.ld-foot-bar{margin:0;border-top:1px solid rgba(255,255,255,.08);padding:14px 28px;text-align:center;font-size:.75rem;color:#64748b}
 @media(max-width:900px){.ld-grid4,.ld-cols,.ld-cta-card,.ld-foot-grid{grid-template-columns:1fr}}
 @media(max-width:480px){
-  .ld-sec{padding:20px 14px}
+  .ld-sec{padding:20px 20px}
   h2{font-size:1.35rem}
   .ld-aud{padding:16px}
   .ld-cta-card{padding:20px 16px}
-  .ld-foot-grid{padding:24px 14px}
+  .ld-foot-grid{padding:24px 28px}
 }
 </style>
