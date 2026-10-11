@@ -104,7 +104,7 @@ onMounted(loadData)
           Matières
         </button>
         <h1 class="result-title">Résultats</h1>
-        <div style="width:100px"></div>
+        <div class="result-spacer"></div>
       </header>
  
       <section class="score-section" role="region" aria-label="Score obtenu">
@@ -177,6 +177,8 @@ onMounted(loadData)
 .result-container { width:100%;max-width:1500px;margin:0 auto;padding:40px 20px;display:flex;flex-direction:column;gap:24px; }
 .result-header { display:flex;align-items:center;justify-content:space-between; }
 .result-title { font-family:'Georgia','Times New Roman',serif;font-size:1.3rem;font-weight:bold;color:#2C2416;margin:0; }
+/* Espaceur : compense le bouton retour pour centrer le titre sur grand écran */
+.result-spacer { width:100px;flex-shrink:0; }
 .back-btn { display:flex;align-items:center;gap:8px;padding:10px 16px;background:#FDFBF8;border:1.5px solid rgba(120,100,80,0.25);color:#2C2416;border-radius:10px;font-family:'Verdana','Geneva',sans-serif;font-size:.875rem;font-weight:bold;cursor:pointer;transition:all .15s; }
 .back-btn:hover { border-color:rgba(120,100,80,0.45); }
 .score-section { background:#FDFBF8;border:1px solid rgba(120,100,80,0.12);border-radius:18px;padding:36px;display:flex;align-items:center;gap:36px;flex-wrap:wrap; }
@@ -186,7 +188,7 @@ onMounted(loadData)
 .ring-score { font-family:'Georgia','Times New Roman',serif;font-size:3rem;font-weight:bold;color:#2C2416;line-height:1; }
 .ring-sep   { font-size:1.3rem;color:#9C8E80;margin:0 2px; }
 .ring-total { font-size:1.5rem;color:#6B5E4E; }
-.score-text { flex:1;min-width:180px; }
+.score-text { flex:1;min-width:min(180px,100%); }
 .score-label   { font-family:'Georgia','Times New Roman',serif;font-size:1.6rem;font-weight:bold;color:#2C2416;margin:0 0 6px 0; }
 .score-pct     { font-size:1.1rem;font-weight:bold;margin:0 0 10px 0; }
 .score-message { font-size:.875rem;color:#6B5E4E;margin:0;line-height:1.6; }
@@ -201,9 +203,26 @@ onMounted(loadData)
 .recap-q      { margin:0 0 4px 0;font-size:.9rem;color:#2C2416;font-weight:600;line-height:1.4; }
 .recap-answer { margin:0;font-size:.8rem;color:#6B5E4E; }
 .actions-row { display:flex;gap:12px;flex-wrap:wrap; }
-.action-btn { flex:1;min-width:180px;display:flex;align-items:center;justify-content:center;gap:9px;padding:16px 24px;border:none;border-radius:18px;font-family:'Verdana','Geneva',sans-serif;font-size:.95rem;font-weight:bold;cursor:pointer;transition:all .15s; }
+.action-btn { flex:1;min-width:min(180px,100%);display:flex;align-items:center;justify-content:center;gap:9px;padding:16px 24px;border:none;border-radius:18px;font-family:'Verdana','Geneva',sans-serif;font-size:.95rem;font-weight:bold;cursor:pointer;transition:all .15s; }
 .action-btn--secondary { background:#F0EDE7;color:#2C2416;border:1px solid rgba(120,100,80,0.12); }
 .action-btn--secondary:hover { opacity:.85; }
 .action-btn--primary { background:linear-gradient(135deg,#4F46E5,#7C3AED);color:#FFF;box-shadow:0 8px 24px rgba(79,70,229,.3); }
 .action-btn--primary:hover { transform:translateY(-2px); }
+
+/* ══ Responsive ══ */
+@media (max-width: 640px) {
+  .result-container { padding: 20px 14px; gap: 18px; }
+  .result-spacer { display: none; }
+  .result-title { font-size: 1.1rem; }
+  .score-section { padding: 20px 16px; gap: 18px; justify-content: center; }
+  .score-text { text-align: center; }
+  .score-label { font-size: 1.3rem; }
+  .ring-score { font-size: 2.4rem; }
+  .recap-section { padding: 18px 14px; }
+  .action-btn { min-width: 100%; }
+}
+@media (max-width: 380px) {
+  .ring-wrap { width: 128px; height: 128px; }
+  .ring-score { font-size: 2rem; }
+}
 </style>

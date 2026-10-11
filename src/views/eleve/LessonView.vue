@@ -1119,7 +1119,7 @@ onUnmounted(() => {
 }
 .images-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
   gap: 14px;
 }
 .lesson-figure {
@@ -1336,6 +1336,10 @@ onUnmounted(() => {
   .quick-btn {
     width: 100%;
     justify-content: center;
+  }
+  .able-wrap {
+    height: min(500px, 56vw);
+    min-height: 200px;
   }
 }
 .form-intro {

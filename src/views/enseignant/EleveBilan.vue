@@ -376,7 +376,7 @@ onMounted(async () => {
 }
 .search-box input { background: none; border: none; outline: none; width: 100%; font-size: 0.9rem; font-family: inherit; }
 .search-icon { color: var(--text-sub); flex-shrink: 0; }
-.feedback-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 20px; }
+.feedback-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(360px, 100%), 1fr)); gap: 20px; }
 .feedback-card {
   padding: 20px; display: flex; flex-direction: column; gap: 16px;
   transition: transform 0.2s ease, box-shadow 0.2s ease;

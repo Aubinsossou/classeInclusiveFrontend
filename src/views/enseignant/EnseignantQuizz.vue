@@ -755,7 +755,7 @@ onUnmounted(() => { stopPolling() })
 .cbl { font-size:.76rem; font-weight:700; color:var(--pro-sub); }
 .create-box-actions { display:flex; gap:8px; justify-content:flex-end; }
 
-.quiz-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:14px; }
+.quiz-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(300px,100%),1fr)); gap:14px; }
 .quiz-card { padding:0; display:flex; flex-direction:column; overflow:hidden; transition:transform .2s,box-shadow .2s; }
 .quiz-card:hover { transform:translateY(-2px); box-shadow:var(--pro-shadow-lg); }
 .qc-header { display:flex; align-items:flex-start; gap:12px; padding:16px 16px 12px; border-bottom:1px solid var(--pro-border); }

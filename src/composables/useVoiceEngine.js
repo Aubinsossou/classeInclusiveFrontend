@@ -188,3 +188,8 @@ function reset() { _aborted = false }
 export function useVoiceEngine() {
   return { isSpeaking, isListening, lastHeard, lastSpoken, speak, listen, announce, reset, stop: stopAll, stopAll }
 }
+
+// Alias utilisé par le guard du router : coupe toute voix en cours lors d'un changement de page.
+export function stopVoice() {
+  stopAll()
+}

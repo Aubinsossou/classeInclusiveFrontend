@@ -398,7 +398,8 @@ onMounted(async () => {
 
 .container {
   padding: 28px 32px;
-  width: 1200px;
+  width: 100%;
+  max-width: 1200px;
   display: flex;
   justify-content: center;
   flex-direction: column;
@@ -447,7 +448,10 @@ onMounted(async () => {
 
 /* ── CARTE CLASSE ── */
 .card_class {
-  width: 270px;
+  width: 100%;
+  max-width: 270px;
+  flex: 1 1 240px;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   border: 2px solid #d4e2ff;
@@ -610,6 +614,8 @@ onMounted(async () => {
   left: 0;
   width: 100%;
   height: 100%;
+  padding: 16px;
+  overflow-y: auto;
   background: rgba(26, 43, 94, 0.55);
   backdrop-filter: blur(5px);
   display: flex;
@@ -621,11 +627,15 @@ onMounted(async () => {
   background: white;
   padding: 28px;
   border-radius: 20px;
-  width: 460px;
+  width: 100%;
+  max-width: 460px;
+  margin: auto;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
   position: relative;
 }
 .contenu_matiere {
-  width: 520px;
+  max-width: 520px;
 }
 
 .fermer {
@@ -816,5 +826,17 @@ input:focus {
 }
 .btn_cancel:hover {
   background: #e2e8f0;
+}
+
+/* ══ Responsive ══ */
+@media (max-width: 640px) {
+  .middle { gap: 14px; }
+  .card_class { padding: 16px; }
+  .container { padding: 18px 14px; }
+  .contenu { padding: 20px 16px; border-radius: 16px; }
+  .matieres_grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 380px) {
+  .contenu { padding: 16px 12px; }
 }
 </style>

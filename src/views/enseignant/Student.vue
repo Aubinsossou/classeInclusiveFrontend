@@ -350,6 +350,9 @@ function handicapBadge(name) {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex: 1 1 200px;
+  min-width: 0;
+  max-width: 340px;
   padding: 9px 13px;
   border: 1.5px solid var(--pro-border);
   border-radius: var(--pro-r-md);
@@ -367,7 +370,9 @@ function handicapBadge(name) {
   font-family: var(--pro-font);
   font-size: 0.83rem;
   color: var(--pro-ink);
-  width: 220px;
+  flex: 1;
+  min-width: 0;
+  width: 100%;
 }
 
 /* Select */

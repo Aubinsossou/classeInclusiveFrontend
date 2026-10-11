@@ -31,11 +31,12 @@
 
 body {
   color: #1a2b7e;
-  height: 100vh;
+  min-height: 100vh;
   background: linear-gradient(160deg, #0f1b3e 0%, #1a2b5e 50%, #2e1a5e 100%);
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: 20px 0;
 }
 
 .container {
@@ -125,6 +126,19 @@ button:hover {
   box-shadow: 0 12px 30px rgba(26, 43, 94, 0.5);
 }
 
+/* ══ Responsive ══ */
+@media (max-width: 480px) {
+  .container {
+    padding: 28px 20px;
+    border-radius: 26px;
+  }
+  h1 {
+    font-size: 1.7rem;
+  }
+  p {
+    font-size: 0.9rem;
+  }
+}
 </style>
 
 <!-- <style scoped>

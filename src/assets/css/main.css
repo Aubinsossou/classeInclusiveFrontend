@@ -583,3 +583,50 @@ h1,h2,h3,h4 { font-family: var(--font-h); }
 .page-leave-to   { opacity: 0; transform: translateY(-4px); }
 .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+/* ═══════════════════════════════════════════════════════
+   RESPONSIVE LAYER — audit responsivité (desktop → 320px)
+   Corrections structurelles, sans hack (pas d'overflow-x
+   caché : on rend le contenu réellement adaptable).
+   ═══════════════════════════════════════════════════════ */
+
+/* Images / médias : jamais de débordement ni de déformation */
+img { max-width: 100%; height: auto; }
+svg, video, canvas { max-width: 100%; }
+
+/* Texte long : césure propre plutôt que débordement */
+.pro-page-title, .pro-panel-title, .pro-brand-name,
+h1, h2, h3 { overflow-wrap: break-word; }
+
+/* Tableaux Pro : défilement horizontal contrôlé (les <th> en
+   nowrap servent de largeur minimale naturelle) */
+.pro-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.pro-table-wrap::-webkit-scrollbar { height: 8px; }
+
+/* Grilles à largeur minimale : ne jamais forcer plus large que l'écran */
+.g-pro-auto-300 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); }
+.g-pro-auto-400 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(400px, 100%), 1fr)); }
+
+/* Barre d'outils + recherche */
+@media (max-width: 640px) {
+  .pro-search-wrap { max-width: none; width: 100%; }
+  .pro-toolbar-left  { flex: 1 1 100%; min-width: 0; }
+  .pro-toolbar-right { flex-wrap: wrap; }
+  .pro-toolbar-right .pro-btn { flex: 1 1 auto; justify-content: center; }
+}
+
+/* Modales Pro : toujours contenues dans l'écran et scrollables */
+@media (max-width: 640px) {
+  .pro-modal-backdrop { padding: 12px; align-items: flex-start; }
+  .pro-modal-box { max-height: 94vh; margin: auto 0; }
+  .pro-modal-head, .pro-modal-body, .pro-modal-footer { padding-left: 18px; padding-right: 18px; }
+  .pro-modal-footer { flex-wrap: wrap; }
+  .pro-modal-footer > * { flex: 1 1 auto; justify-content: center; }
+  .pro-page-title { font-size: 1.3rem; }
+  .pro-page-header { gap: 12px; }
+}
+
+/* Boutons : autoriser le retour à la ligne du libellé sur petit écran */
+@media (max-width: 480px) {
+  .pro-btn { white-space: normal; text-align: center; }
+}

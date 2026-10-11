@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
-import Home from '@/views/Login.vue'
+import LandingPage from '@/views/public/LandingPage.vue'
 import EcoleClasse from '@/views/admin/adminClasse.vue'
 import Cours from '@/views/enseignant/Cours.vue'
 import EnseignantEleve from '@/views/enseignant/Student.vue'
@@ -16,6 +16,19 @@ import MatiereView from '../views/admin/adminMatiere.vue'
 import EnseignantDashboard from '../views/enseignant/enseignantDashboard.vue'
 import EcoleLogin from '@/views/admin/EcoleLogin.vue'
 import EleveBilan from '@/views/enseignant/EleveBilan.vue'
+import ClientLogin from '@/views/client/ClientLogin.vue'
+import ClientRegister from '@/views/client/ClientRegister.vue'
+import ClientDashboard from '@/views/client/ClientDashboard.vue'
+import ClientEcoles from '@/views/client/ClientEcoles.vue'
+import ClientClasses from '@/views/client/ClientClasses.vue'
+import ClientMatieres from '@/views/client/ClientMatieres.vue'
+import ClientEnseignants from '@/views/client/ClientEnseignants.vue'
+import ClientCours from '@/views/client/ClientCours.vue'
+import ClientQuizzes from '@/views/client/ClientQuizzes.vue'
+import ClientHandicaps from '@/views/client/ClientHandicaps.vue'
+import ClientProfil from '@/views/client/ClientProfil.vue'
+import ClientEleves from '@/views/client/ClientEleves.vue'
+import ClientEtablissement from '@/views/client/ClientEtablissement.vue'
 
 // ── Imports espace élève ────────────────────────────────
 import EleveLogin      from '@/views/eleve/LoginView.vue'
@@ -35,8 +48,9 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      name: 'home',
-      component: Home,
+      name: 'landing',
+      component: LandingPage,
+      meta: { public: true },
     },
     {
       path: '/ecole/register',
@@ -140,6 +154,21 @@ const router = createRouter({
     { path: '/eleve/blind/subject/:subjectId',                                 name: 'BlindCourses',  component: BlindCourses,    meta: { role: 'eleve', requiresEleveAuth: true }, props: true },
     { path: '/eleve/blind/subject/:subjectId/lesson/:lessonId',                name: 'BlindLesson',   component: BlindLesson,     meta: { role: 'eleve', requiresEleveAuth: true }, props: true },
     { path: '/eleve/blind/subject/:subjectId/lesson/:lessonId/quiz',           name: 'BlindQuiz',     component: BlindQuiz,       meta: { role: 'eleve', requiresEleveAuth: true }, props: true },
+
+    // ── Espace client (consultatif / analytique) ──
+    { path: '/client/login',      name: 'ClientLogin',      component: ClientLogin },
+    { path: '/client/register',   name: 'ClientRegister',   component: ClientRegister },
+    { path: '/client/dashboard',  name: 'ClientDashboard',  component: ClientDashboard,  meta: { role: 'client', requiresClientAuth: true } },
+    { path: '/client/ecoles',     name: 'ClientEcoles',     component: ClientEcoles,     meta: { role: 'client', requiresClientAuth: true } },
+    { path: '/client/classes',    name: 'ClientClasses',    component: ClientClasses,    meta: { role: 'client', requiresClientAuth: true } },
+    { path: '/client/matieres',   name: 'ClientMatieres',   component: ClientMatieres,   meta: { role: 'client', requiresClientAuth: true } },
+    { path: '/client/enseignants', name: 'ClientEnseignants', component: ClientEnseignants, meta: { role: 'client', requiresClientAuth: true } },
+    { path: '/client/cours',      name: 'ClientCours',      component: ClientCours,      meta: { role: 'client', requiresClientAuth: true } },
+    { path: '/client/quizzes',    name: 'ClientQuizzes',    component: ClientQuizzes,    meta: { role: 'client', requiresClientAuth: true } },
+    { path: '/client/handicaps',  name: 'ClientHandicaps',  component: ClientHandicaps,  meta: { role: 'client', requiresClientAuth: true } },
+    { path: '/client/eleves',     name: 'ClientEleves',     component: ClientEleves,     meta: { role: 'client', requiresClientAuth: true } },
+    { path: '/client/etablissements/:id', name: 'ClientEtablissement', component: ClientEtablissement, meta: { role: 'client', requiresClientAuth: true }, props: true },
+    { path: '/client/profil',     name: 'ClientProfil',     component: ClientProfil,     meta: { role: 'client', requiresClientAuth: true } },
   ],
 })
 
@@ -156,17 +185,28 @@ router.beforeEach((to) => {
     if (!token || role !== 'eleve') return { name: 'EleveLogin' }
   }
 
-  //  Guard école / enseignant 
-  if (!token) {
-    if (to.meta.requiresEcoleAuth)      return { name: 'ecoleLogin' }
-    if (to.meta.requiresEnseignantAuth) return { name: 'enseignantlogin' }
+  //  Guard client 
+  if (to.meta.requiresClientAuth) {
+    if (!token || role !== 'client') return { name: 'ClientLogin' }
   }
 
-  //  Redirection si déjà connecté 
-  if (token && (to.name === 'ecoleLogin' || to.name === 'enseignantlogin' || to.name === 'ecoleRegister' || to.name === 'EleveLogin')) {
-    if (role === 'ecole')       return { name: 'adminDashboard' }
-    if (role === 'enseignant')  return { name: 'enseignantDashboard' }
-    if (role === 'eleve')       return { name: 'Dashboard' }
+  //  Guard école / enseignant (token + rôle strict : un rôle ne traverse jamais l'autre espace)
+  if (to.meta.requiresEcoleAuth) {
+    if (!token || role !== 'ecole') return { name: 'ecoleLogin' }
+  }
+  if (to.meta.requiresEnseignantAuth) {
+    if (!token || role !== 'enseignant') return { name: 'enseignantlogin' }
+  }
+
+  //  Redirection si déjà connecté — même rôle uniquement.
+  // La landing doit mener purement et simplement vers le login/register demandé :
+  // /enseignant/login, /ecole/login et /ecole/register restent affichés même avec une session client active.
+  // Seul le login client déjà connecté en tant que client redirige vers le dashboard client.
+  if (token) {
+    if ((to.name === 'ClientLogin' || to.name === 'ClientRegister') && role === 'client') return { name: 'ClientDashboard' }
+    if ((to.name === 'ecoleLogin' || to.name === 'ecoleRegister') && role === 'ecole') return { name: 'adminDashboard' }
+    if (to.name === 'enseignantlogin' && role === 'enseignant') return { name: 'enseignantDashboard' }
+    if (to.name === 'EleveLogin' && role === 'eleve') return { name: 'Dashboard' }
   }
 
   //  Mauvais rôle sur une route protégée 
@@ -174,5 +214,6 @@ router.beforeEach((to) => {
     if (role === 'ecole')      return { name: 'adminDashboard' }
     if (role === 'enseignant') return { name: 'enseignantDashboard' }
     if (role === 'eleve')      return { name: 'Dashboard' }
+    if (role === 'client')     return { name: 'ClientDashboard' }
   }
 })
