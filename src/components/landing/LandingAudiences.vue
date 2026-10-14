@@ -76,6 +76,8 @@ h2{font-size:1.6rem;color:var(--pro-ink);letter-spacing:-.02em;margin-bottom:12p
    l'emporte sur le reset universel *{margin:0} (0-0-0) et créait une bande de
    ~16px sous le footer : le footer n'était plus collé au bas de l'écran. */
 .ld-foot-bar{margin:0;border-top:1px solid rgba(255,255,255,.08);padding:14px 28px;text-align:center;font-size:.75rem;color:#64748b}
+/* Lisibilité mobile : plancher 12px (racine 15px) + cibles tactiles ≥24px */
+@media(max-width:640px){ .ld-kicker{font-size:.8rem} .ld-foot nav a{display:block;padding:5px 0} }
 @media(max-width:900px){.ld-grid4,.ld-cols,.ld-cta-card,.ld-foot-grid{grid-template-columns:1fr}}
 @media(max-width:480px){
   .ld-sec{padding:20px 20px}

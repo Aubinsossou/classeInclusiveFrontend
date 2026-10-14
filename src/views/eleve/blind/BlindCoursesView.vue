@@ -255,4 +255,6 @@ onUnmounted(() => voice.stop())
 .ca-btn--lesson:hover { background:var(--accent,#4F46E5);color:#FFF; }
 .ca-btn--quiz   { background:var(--green-bg,rgba(74,222,128,0.08));color:var(--green,#4ADE80);border-color:var(--green-border); }
 @media(max-width:900px) { .bv-body{grid-template-columns:1fr;height:auto;} .bv-panel{border-right:none;border-bottom:1px solid var(--border);} }
+/* Lisibilité malvoyant : plancher 12px (racine 15px) */
+.tr-label, .monitor-title, .cmd-key, .cmd-action, .tr-text, .vi-label, .vi-stop, .pa-btn { font-size: 0.8rem; }
 </style>

@@ -605,6 +605,7 @@ onMounted(async () => {
   border-color: var(--blue);
 }
 .sel {
+  max-width: 100%;
   padding: 8px 12px;
   border: 1.5px solid var(--border);
   border-radius: var(--r);
@@ -622,7 +623,8 @@ onMounted(async () => {
   background: white;
   border: 1.5px solid var(--border);
   border-radius: var(--r-lg);
-  overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   box-shadow: var(--sh);
 }
 .table {
@@ -858,4 +860,6 @@ onMounted(async () => {
 .h-btn-danger:hover {
   background: #b91c1c;
 }
+/* Lisibilité mobile : plancher 12px (racine 15px) */
+@media(max-width:640px){ .table th,.badge{font-size:.8rem} }
 </style>

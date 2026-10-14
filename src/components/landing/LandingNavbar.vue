@@ -58,6 +58,7 @@ function close() { open.value = false; loginOpen.value = false }
 .ld-logo{width:44px;height:44px;object-fit:contain;border-radius:10px;background:#fff;border:1px solid var(--pro-border)}
 .ld-brand-txt{display:flex;flex-direction:column;font-size:1rem;line-height:1.1}
 .ld-brand-txt small{font-size:.65rem;color:var(--pro-muted);font-weight:700;text-transform:uppercase;letter-spacing:.08em}
+@media(max-width:640px){ .ld-brand-txt small{font-size:.8rem} }
 .ld-links{display:flex;gap:18px}
 .ld-links a{font-size:.85rem;font-weight:700;color:var(--pro-sub);text-decoration:none}
 .ld-links a:hover{color:var(--pro-blue)}

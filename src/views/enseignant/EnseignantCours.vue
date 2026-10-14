@@ -452,14 +452,14 @@ function mediaBg(type) {
                 :class="{ 'tt-active': editor.isActive('heading', { level: 2 }) }"
                 @click="editor.chain().focus().toggleHeading({ level: 2 }).run()"
               >
-                <span style="font-size: 0.75rem; font-weight: 800">H2</span>
+                <span style="font-size: 0.8rem; font-weight: 800">H2</span>
               </button>
               <button
                 class="tt-btn"
                 :class="{ 'tt-active': editor.isActive('heading', { level: 3 }) }"
                 @click="editor.chain().focus().toggleHeading({ level: 3 }).run()"
               >
-                <span style="font-size: 0.75rem; font-weight: 800">H3</span>
+                <span style="font-size: 0.8rem; font-weight: 800">H3</span>
               </button>
               <div class="tt-sep"></div>
               <button
@@ -1489,4 +1489,6 @@ function mediaBg(type) {
   color: var(--pro-red);
   border-color: #fecaca;
 }
+/* Lisibilité mobile : plancher 12px (racine 15px) */
+@media(max-width:640px){ .cfv-badge,.cfv-section-sub,.prog-sub,.prog-reset-btn,.field-label{font-size:.8rem} }
 </style>

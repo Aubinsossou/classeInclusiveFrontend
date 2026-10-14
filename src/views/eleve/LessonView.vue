@@ -1505,4 +1505,8 @@ onUnmounted(() => {
   color: #5c4e3e;
   line-height: 1.55;
 }
+/* Lisibilité mobile : plancher 12px pour la micro-typographie */
+@media(max-width:640px){ .typo-val{font-size:.8rem} }
+/* Débordement 320px : lignes de leçon contraintes + passage sur deux lignes */
+@media(max-width:640px){ .cta-inner{flex-wrap:wrap;max-width:100%} .form-intro{flex-wrap:wrap} }
 </style>

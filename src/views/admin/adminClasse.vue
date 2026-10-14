@@ -839,4 +839,6 @@ input:focus {
 @media (max-width: 380px) {
   .contenu { padding: 16px 12px; }
 }
+/* Lisibilité mobile : plancher 12px (racine 15px) */
+@media(max-width:640px){ .stat_chip,.no_matiere{font-size:.8rem} }
 </style>

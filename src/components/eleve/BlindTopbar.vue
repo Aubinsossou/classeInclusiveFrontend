@@ -129,7 +129,7 @@ onMounted(async()=>{
 .bt-brand { font-family:'Georgia', 'Times New Roman', serif;font-size:.95rem;font-weight:bold;color:#2C2416; }
 
 .bt-mode-badge {
-  font-size:.72rem;font-weight:bold;letter-spacing:.04em;
+  font-size:.8rem;font-weight:bold;letter-spacing:.04em;
   padding:4px 10px;border-radius:20px;white-space:nowrap;
 }
 .bt-mode-badge--vocal { background:rgba(79,70,229,.12);border:1px solid rgba(79,70,229,.28);color:#5C4FE0; }
@@ -160,7 +160,7 @@ onMounted(async()=>{
   width:34px;height:34px;border-radius:50%;
   background:linear-gradient(135deg,#5C4FE0,#7C3AED);
   display:flex;align-items:center;justify-content:center;
-  font-weight:bold;font-size:.78rem;color:#FFF;flex-shrink:0;
+  font-weight:bold;font-size:.8rem;color:#FFF;flex-shrink:0;
 }
 .bt-username { font-size:.84rem;font-weight:bold;color:#2C2416; }
 
@@ -212,11 +212,23 @@ onMounted(async()=>{
   box-shadow: 0 4px 14px rgba(239,68,68,.25);
 }
 
+/* Zone 761–960px : compression de la barre (débordement mesuré jusqu'à 900px) */
+@media(max-width:960px) {
+  .blind-topbar { padding: 0 14px; gap: 8px; }
+  .bt-left, .bt-right { flex-shrink: 1; min-width: 0; }
+  .bt-brand { display: none; }
+  .bt-username { max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bt-btn { padding: 11px 12px; }
+}
 @media(max-width:760px) {
   .bt-pts-bar-wrap { display:none; }
   .bt-username { display:none; }
   .bt-brand { display:none; }
   .bt-btn-label { display:none; }
   .bt-btn { padding: 11px 14px; }
+}
+/* 320px : la barre doit tenir — badge et nom de classe masqués */
+@media(max-width:480px) {
+  .bt-mode-badge, .bt-pts-level, .bt-sep { display: none; }
 }
 </style>

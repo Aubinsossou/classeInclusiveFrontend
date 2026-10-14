@@ -377,6 +377,7 @@ function handicapBadge(name) {
 
 /* Select */
 .pro-select {
+  max-width: 100%;
   padding: 9px 32px 9px 13px;
   border: 1.5px solid var(--pro-border);
   border-radius: var(--pro-r-md);
@@ -493,7 +494,8 @@ function handicapBadge(name) {
   border-radius: var(--pro-r-lg);
   border: 1px solid var(--pro-border);
   box-shadow: var(--pro-shadow-md);
-  overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 .pro-table {
   width: 100%;
@@ -552,4 +554,6 @@ function handicapBadge(name) {
   opacity: 0.25;
   display: block;
 }
+/* Lisibilité mobile : plancher 12px + cible tactile ≥44px */
+@media(max-width:640px){ .pro-table th,.td-muted{font-size:.8rem} .search-input{min-height:44px} }
 </style>

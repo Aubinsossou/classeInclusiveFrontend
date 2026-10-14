@@ -95,11 +95,12 @@ onMounted(loadClient)
   font-family: 'Plus Jakarta Sans', 'Nunito', sans-serif;
   flex-wrap: wrap;
 }
-.hc-brand { display: flex; align-items: center; gap: 10px; color: white; }
+.hc-brand { display: flex; align-items: center; gap: 10px; color: white; min-width: 0; }
+.hc-brand > div { min-width: 0; }
 .hc-logo { width: 56px; display: flex; align-items: center; }
 .hc-logo img { width: 100%; }
-.logo-title { font-weight: 900; font-size: 1.25rem; line-height: 1; color: white; }
-.logo-desc { opacity: 0.7; color: white; font-size: 0.85rem; }
+.logo-title { font-weight: 900; font-size: 1.25rem; line-height: 1; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.logo-desc { opacity: 0.7; color: white; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .header-part2 { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
 .hc-link { padding: 8px 12px; color: rgba(255,255,255,0.72); text-decoration: none; font-weight: 700; font-size: 0.92rem; border-radius: 10px; }
 .hc-link:hover { background: rgba(255,255,255,0.16); color: #fff; }

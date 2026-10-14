@@ -472,4 +472,6 @@ async function handleSubmit() {
     font-size: 1.25rem;
   }
 }
+/* Lisibilité mobile : plancher 12px pour la micro-typographie */
+@media(max-width:640px){ .brand-sub{font-size:.8rem} .contrast-btn{font-size:.8rem} }
 </style>

@@ -323,4 +323,6 @@ async function handleRegister() {
 
 .fade-enter-active, .fade-leave-active { transition: opacity 0.25s; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
+/* Lisibilité mobile : cible tactile ≥24px */
+@media(max-width:640px){ .lc-link{padding:4px 0} }
 </style>

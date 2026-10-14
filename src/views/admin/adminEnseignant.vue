@@ -662,7 +662,8 @@ section {
 
 .wrap {
   border-radius: 32px;
-  overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   border: 2px solid #d4e2ff;
   box-shadow:
     0 4px 20px #4bbfed1f,
@@ -672,6 +673,7 @@ section {
 table {
   border-collapse: collapse;
   width: 100%;
+  min-width: 620px;
 }
 
 thead {

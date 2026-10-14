@@ -756,4 +756,6 @@ onMounted(async () => {
   .classes_container { padding: 14px; }
   .delete_body_svg { height: 70px; width: 70px; }
 }
+/* Lisibilité mobile : plancher 12px (racine 15px) */
+@media(max-width:640px){ .sc-footer-txt{font-size:.8rem} }
 </style>

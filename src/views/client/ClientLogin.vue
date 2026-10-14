@@ -72,4 +72,6 @@ async function submit() {
 .cl-card form{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
 .cl-submit{width:100%;justify-content:center;margin-top:6px}
 .cl-foot{text-align:center;font-size:.85rem;color:#94a3b8}.cl-foot a{color:#6d28d9;font-weight:700;text-decoration:none}
+/* Lisibilité mobile : plancher 12px + cible tactile ≥24px */
+@media(max-width:640px){ .cl-tag{font-size:.8rem} }
 </style>

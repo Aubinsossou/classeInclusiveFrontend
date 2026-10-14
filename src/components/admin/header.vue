@@ -340,4 +340,8 @@ onMounted( async () =>{
     padding: 7px 13px;
   }
 }
+/* Débordement 320px : marque contractile + noms longs en ellipse */
+#header .header-brand { flex-shrink: 1; }
+#header .header-brand > div { min-width: 0; }
+.logo-title, .logo-desc { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 </style>

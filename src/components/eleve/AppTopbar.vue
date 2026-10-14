@@ -305,4 +305,6 @@ onMounted(async () => {
     max-width: 120px;
   }
 }
+/* Lisibilité mobile : plancher 12px pour la micro-typographie */
+@media(max-width:640px){ .at-avatar{font-size:.8rem} }
 </style>

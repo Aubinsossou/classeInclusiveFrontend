@@ -639,6 +639,7 @@ onUnmounted(() => { stopPolling() })
               <AppIcon name="results" :size="16" /> Notes des élèves
             </h2>
           </div>
+          <div class="results-scroll">
           <table class="results-table">
             <thead>
               <tr>
@@ -679,6 +680,7 @@ onUnmounted(() => { stopPolling() })
               </tr>
             </tbody>
           </table>
+          </div>
         </div>
 
         <!-- Distribution -->
@@ -859,9 +861,10 @@ onUnmounted(() => { stopPolling() })
 .stat-label { font-size:.72rem; color:var(--pro-muted); text-transform:uppercase; letter-spacing:.06em; font-weight:700; }
 
 .results-card { overflow:hidden; }
+.results-scroll { overflow-x:auto; -webkit-overflow-scrolling: touch; }
 .results-header { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:14px 20px; border-bottom:1px solid var(--pro-border); }
 .results-title { display:flex; align-items:center; gap:8px; font-size:.9rem; font-weight:800; color:var(--pro-ink); margin:0; }
-.results-table { width:100%; border-collapse:collapse; }
+.results-table { width:100%; border-collapse:collapse; min-width:560px; }
 .results-table th { padding:9px 16px; font-size:.7rem; font-weight:800; color:var(--pro-muted); text-transform:uppercase; letter-spacing:.06em; background:#f8fafc; border-bottom:1px solid var(--pro-border); text-align:left; }
 .results-table td { padding:10px 16px; border-bottom:1px solid var(--pro-border); font-size:.84rem; vertical-align:middle; }
 .results-table tr:last-child td { border-bottom:none; }
@@ -879,4 +882,6 @@ onUnmounted(() => { stopPolling() })
 .dist-bar { width:100%; border-radius:5px 5px 0 0; min-height:4px; display:flex; align-items:flex-start; justify-content:center; transition:height .4s ease; }
 .dist-count { font-size:.7rem; font-weight:900; color:white; padding-top:4px; }
 .dist-label { font-size:.65rem; font-weight:700; color:var(--pro-muted); white-space:nowrap; }
+/* Lisibilité mobile : plancher 12px (racine 15px) */
+@media(max-width:640px){ .results-table th,.student-av{font-size:.8rem} }
 </style>

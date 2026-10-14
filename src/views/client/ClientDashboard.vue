@@ -135,4 +135,6 @@ onMounted(() => load())
 .bar-track{height:10px;background:#eef2f7;border-radius:99px;overflow:hidden}
 .bar-fill{height:100%;background:linear-gradient(90deg,#2563eb,#6d28d9);border-radius:99px}
 .bar-value{font-size:.78rem;font-weight:700;color:#0f172a;white-space:nowrap}
+/* Lisibilité mobile : plancher 12px + cible tactile ≥24px */
+@media(max-width:640px){ .dash-date,.bar-value{font-size:.8rem} .dash-link{display:inline-block;padding:4px 0} }
 </style>

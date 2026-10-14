@@ -422,4 +422,6 @@ onMounted(async () => {
   .feedback-grid { grid-template-columns: 1fr; }
   .stats-row { flex-direction: column; }
 }
+/* Lisibilité mobile : plancher 12px + cibles tactiles ≥44px */
+@media(max-width:640px){ .pill-count,.stat-label{font-size:.8rem} .btn-back,.search-box input{min-height:44px} }
 </style>
