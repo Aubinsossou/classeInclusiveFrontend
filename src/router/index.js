@@ -14,6 +14,7 @@ import AdminEleve from '../views/admin/adminEleve.vue'
 import adminDashboard from '../views/admin/adminDashboard.vue'
 import MatiereView from '../views/admin/adminMatiere.vue'
 import EnseignantDashboard from '../views/enseignant/enseignantDashboard.vue'
+import EnseignantProfil from '../views/enseignant/EnseignantProfil.vue'
 import EcoleLogin from '@/views/admin/EcoleLogin.vue'
 import EleveBilan from '@/views/enseignant/EleveBilan.vue'
 import ClientLogin from '@/views/client/ClientLogin.vue'
@@ -122,6 +123,12 @@ const router = createRouter({
       path: '/enseignant/cours/form/:id',
       name: 'enseignantcoursformedit',
       component: EnseignantCours,
+      meta: { role: 'enseignant', requiresEnseignantAuth: true }
+    },
+    {
+      path: '/enseignant/profil',
+      name: 'enseignantprofil',
+      component: EnseignantProfil,
       meta: { role: 'enseignant', requiresEnseignantAuth: true }
     },
     {

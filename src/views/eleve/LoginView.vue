@@ -2,8 +2,11 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { apiPost, apiGet } from '@/helpers/axiosApi'
+import { useFormToast } from '@/composables/useFormToast'
 
 const router = useRouter()
+
+const { show: showToast } = useFormToast()
 
 const code = ref('')
 const isLoading = ref(false)
@@ -33,7 +36,12 @@ function handleKey(value) {
 }
 
 async function handleSubmit() {
-  if (code.value.length < 4) return
+  if (code.value.length < 4) {
+    errorMessage.value = 'Veuillez saisir votre code à 4 chiffres minimum.'
+    // Petit modal rouge non bloquant → renvoie l'élève vers l'affichage du code
+    showToast([{ el: document.querySelector('#main-form .dots'), label: 'Code' }])
+    return
+  }
   isLoading.value = true
   errorMessage.value = ''
   try {
@@ -188,7 +196,7 @@ async function handleSubmit() {
 
       <button
         class="submit"
-        :disabled="code.length < 4 || isLoading"
+        :disabled="isLoading"
         @click="handleSubmit"
         type="button"
       >

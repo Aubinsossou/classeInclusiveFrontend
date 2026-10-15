@@ -65,14 +65,26 @@ const apiGetMatieres = async (ecole_id) => {
 
 onMounted(async () => {
   loading.value = true
-  await apiGetUser()
-  await apiGetListeEnseignant(userAuth.value?.data?.id)
-  await apiGetEleves(userAuth.value?.data?.id)
-  await apiGEtListeClasse(userAuth.value?.data?.id)
-  await apiGetMatieres(userAuth.value?.data?.id)
-  await apiGetHandicaps()
-  loading.value = false
+  try {
+    await apiGetUser()
+    const ecoleId = userAuth.value?.data?.id
 
+    // Appels isolés : un endpoint en échec n'empêche pas les autres
+    // de remplir le tableau de bord (et ne bloque jamais le spinner).
+    await Promise.allSettled([
+      apiGetListeEnseignant(ecoleId),
+      apiGetEleves(ecoleId),
+      apiGEtListeClasse(ecoleId),
+      apiGetMatieres(ecoleId),
+      apiGetHandicaps(),
+    ])
+  } catch (e) {
+    // 401 géré par l'intercepteur axios (redirection login) ;
+    // autres erreurs : on affiche quand même la page.
+    console.error('Erreur chargement tableau de bord :', e)
+  } finally {
+    loading.value = false
+  }
 })
 </script>
 

@@ -1,8 +1,9 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { apiGet } from '@/helpers/axiosApi'
-import    LoadingView  from '@/components/admin/Loading.vue'
+import { apiGet, apiDelete } from '@/helpers/axiosApi'
+import LoadingView from '@/components/admin/Loading.vue'
 import codeToggle from '@/components/admin/codeToggle.vue'
+import AddEleveForm from '@/components/enseignant/AddEleveForm.vue'
 
 const getEnseignantAuth = ref(null)
 const handicaps = ref([])
@@ -31,6 +32,8 @@ onMounted(async () => {
 // ── Données dérivées ───────────────────────────────────────────────────────
 const userAuth = computed(() => getEnseignantAuth.value?.data ?? null)
 const eleves = computed(() => userAuth.value?.classe?.eleves ?? [])
+// L'enseignant ne peut gérer ses élèves que s'il a une classe assignée.
+const canManage = computed(() => Boolean(userAuth.value?.classe_id))
 
 // ── Filtres ────────────────────────────────────────────────────────────────
 const search = ref('')
@@ -57,6 +60,69 @@ function formatDate(d) {
 // Eleve connecter
 function isOnline(eleve) {
   return eleve.is_connect === true || eleve.is_connect === 'true'
+}
+
+// ── Toast ──────────────────────────────────────────────────────────────────
+const toast = ref(null)
+const toastVisible = ref(false)
+let toastTimer = null
+function showToast(msg, type = 'success') {
+  clearTimeout(toastTimer)
+  toast.value = { msg, type }
+  toastVisible.value = true
+  toastTimer = setTimeout(() => (toastVisible.value = false), 3500)
+}
+
+// ── Modale d'ajout : seul l'état d'ouverture vit ici.
+// Tout le formulaire / validation / soumission est dans AddEleveForm.vue. ──
+const showForm = ref(false)
+
+function openAdd() {
+  showForm.value = true
+}
+
+async function onEleveCreated({ message }) {
+  showForm.value = false
+  showToast(message || 'Élève ajouté à votre classe.', 'success')
+  await apiGetEnseignantConnect()
+}
+
+// ── Suppression d'un élève ─────────────────────────────────────────────────
+const showDelete = ref(false)
+const deleteTarget = ref(null)
+const deleting = ref(false)
+const deleteError = ref('')
+
+function confirmDelete(e) {
+  deleteTarget.value = e
+  deleteError.value = ''
+  showDelete.value = true
+}
+
+const doDelete = async () => {
+  if (!deleteTarget.value) return
+  deleting.value = true
+  deleteError.value = ''
+  try {
+    const response = await apiDelete(`enseignant/classe/eleve/destroy/${deleteTarget.value.id}`)
+    console.log('élève supprimé:', response.data)
+    showDelete.value = false
+    deleteTarget.value = null
+    showToast(response.data?.message || 'Élève supprimé avec succès.', 'success')
+    await apiGetEnseignantConnect()
+  } catch (err) {
+    const status = err?.response?.status
+    const data = err?.response?.data
+    if (status === 401) {
+      localStorage.removeItem('access_token')
+      localStorage.removeItem('role')
+      window.location.href = '/enseignant/login'
+    } else {
+      deleteError.value = data?.message || 'La suppression a échoué.'
+    }
+  } finally {
+    deleting.value = false
+  }
 }
 
 // ── Mapping handicap → style ───────────────────────────────────────────────
@@ -86,6 +152,25 @@ function handicapBadge(name) {
           {{ eleves.length }} élève(s) · classe {{ userAuth?.classe?.name ?? '…' }}
         </p>
       </div>
+      <div v-if="!canManage" class="pro-warn-inline" role="note">
+        Aucune classe assignée : l'ajout et la suppression d'élèves sont désactivés.
+      </div>
+      <button v-else class="pro-btn pro-btn-primary" @click.prevent="openAdd">
+        <svg
+          width="15"
+          height="15"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          aria-hidden="true"
+        >
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+        Ajouter un élève
+      </button>
     </div>
 
     <!-- FILTRES -->
@@ -123,6 +208,7 @@ function handicapBadge(name) {
             <th>Date de naissance</th>
             <th>Tél. parent</th>
             <th>Statut</th>
+            <th style="text-align: right">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -214,7 +300,7 @@ function handicapBadge(name) {
                   <rect x="3" y="11" width="18" height="11" rx="2" />
                   <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                 </svg>
-                <codeToggle :code="eleve?.code"  />
+                <codeToggle :code="String(eleve?.code ?? '')" />
               </span>
             </td>
 
@@ -259,12 +345,43 @@ function handicapBadge(name) {
                 {{ isOnline(eleve) ? 'En ligne' : 'Hors ligne' }}
               </div>
             </td>
+
+            <!-- Actions -->
+            <td>
+              <div class="pro-actions">
+                <button
+                  class="pro-icon-btn pro-icon-btn-danger"
+                  type="button"
+                  title="Supprimer l'élève"
+                  aria-label="Supprimer {{ eleve.prenom }} {{ eleve.name }}"
+                  :disabled="!canManage"
+                  @click="confirmDelete(eleve)"
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                    <path d="M10 11v6M14 11v6" />
+                    <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                  </svg>
+                </button>
+              </div>
+            </td>
           </tr>
 
           <!-- Empty -->
           <tr v-if="filteredEleves.length === 0">
             <td
-              colspan="6"
+              colspan="7"
               style="text-align: center; padding: 40px; color: var(--pro-muted); font-style: italic"
             >
               Aucun élève trouvé.
@@ -292,6 +409,215 @@ function handicapBadge(name) {
       </svg>
       <p>Aucun élève dans votre classe pour le moment.</p>
     </div>
+
+    <!-- ══ MODALE AJOUT D'UN ÉLÈVE ══ -->
+    <Teleport v-if="showForm" to="body">
+      <div class="h-overlay" @click.self="showForm = false">
+        <div class="h-modal h-modal-lg">
+          <div class="h-modal-head">
+            <h2 class="h-modal-title">Ajouter un élève à ma classe</h2>
+            <button class="h-close-btn" type="button" aria-label="Fermer" @click="showForm = false">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                aria-hidden="true"
+              >
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
+
+          <div class="h-modal-body">
+            <p class="h-modal-sub">
+              Classe de rattachement : <strong>{{ userAuth?.classe?.name ?? '—' }}</strong>
+            </p>
+
+            <div v-if="formError" class="h-error" role="alert">{{ formError }}</div>
+
+            <div ref="formEl" class="h-form-grid">
+              <div class="h-field">
+                <label class="h-lbl" for="st-nom">Nom <span class="h-req">*</span></label>
+                <input id="st-nom" v-model="form.name" class="h-inp" placeholder="Ex : DUPONT" required />
+              </div>
+
+              <div class="h-field">
+                <label class="h-lbl" for="st-prenom">Prénom <span class="h-req">*</span></label>
+                <input id="st-prenom" v-model="form.prenom" class="h-inp" placeholder="Ex : Lucas" required />
+              </div>
+
+              <div class="h-field">
+                <label class="h-lbl" for="st-dob">Date de naissance</label>
+                <input id="st-dob" v-model="form.dateOfNaissance" type="date" class="h-inp" />
+              </div>
+
+              <div class="h-field">
+                <label class="h-lbl" for="st-parent">N° des parents</label>
+                <input
+                  id="st-parent"
+                  v-model="form.numeroParent"
+                  class="h-inp"
+                  placeholder="Ex : 0195959595"
+                  type="text"
+                />
+              </div>
+
+              <div class="h-field">
+                <label class="h-lbl" for="st-code">Code (matricule) <span class="h-req">*</span></label>
+                <input
+                  id="st-code"
+                  v-model="form.code"
+                  class="h-inp"
+                  :class="{ 'h-inp-err': fieldErrors.code }"
+                  placeholder="Ex : 123456"
+                  type="text"
+                  required
+                />
+                <span v-if="firstError('code')" class="h-field-err">{{ firstError('code') }}</span>
+              </div>
+
+              <div class="h-field">
+                <label class="h-lbl" for="st-handicap">
+                  Profil d'accessibilité <span class="h-req">*</span>
+                </label>
+                <select id="st-handicap" v-model="form.handicap_id" class="h-inp" required>
+                  <option value="">— Choisir —</option>
+                  <option v-for="h in handicaps" :key="h.id" :value="h.id">{{ h.name }}</option>
+                </select>
+                <span v-if="firstError('handicap_id')" class="h-field-err">
+                  {{ firstError('handicap_id') }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="h-modal-foot">
+            <button class="h-btn h-btn-ghost" type="button" @click="showForm = false">Annuler</button>
+            <button
+              class="h-btn h-btn-primary"
+              type="button"
+              :disabled="submitting"
+              @click="submitForm"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              {{ submitting ? 'Ajout…' : 'Inscrire' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- ══ MODALE SUPPRESSION ══ -->
+    <Teleport v-if="showDelete" to="body">
+      <div class="h-overlay" @click.self="showDelete = false">
+        <div class="h-modal">
+          <div class="h-modal-head">
+            <h2 class="h-modal-title">Retirer cet élève ?</h2>
+            <button
+              class="h-close-btn"
+              type="button"
+              aria-label="Fermer"
+              @click="showDelete = false"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                aria-hidden="true"
+              >
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
+
+          <div class="h-modal-body" style="text-align: center">
+            <div class="h-del-icon">
+              <svg
+                width="40"
+                height="40"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#DC2626"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                aria-hidden="true"
+              >
+                <path
+                  d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
+                />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+            </div>
+            <div v-if="deleteError" class="h-error" role="alert">{{ deleteError }}</div>
+            <p class="h-del-text">
+              Retirer <strong>{{ deleteTarget?.prenom }} {{ deleteTarget?.name }}</strong>
+              de votre classe ?<br />
+              Cette action est irréversible : ses notes et retours de projection seront supprimés.
+            </p>
+          </div>
+
+          <div class="h-modal-foot">
+            <button class="h-btn h-btn-ghost" type="button" @click="showDelete = false">
+              Annuler
+            </button>
+            <button class="h-btn h-btn-danger" type="button" :disabled="deleting" @click="doDelete">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <polyline points="3 6 5 6 21 6" />
+                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                <path d="M10 11v6M14 11v6" />
+              </svg>
+              {{ deleting ? 'Suppression…' : 'Supprimer définitivement' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- ══ TOAST ══ -->
+    <transition name="toast-slide">
+      <div
+        v-if="toastVisible && toast"
+        class="h-toast"
+        :class="toast.type === 'error' ? 'h-toast-error' : 'h-toast-success'"
+        role="status"
+        aria-live="polite"
+      >
+        {{ toast.msg }}
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -555,5 +881,269 @@ function handicapBadge(name) {
   display: block;
 }
 /* Lisibilité mobile : plancher 12px + cible tactile ≥44px */
-@media(max-width:640px){ .pro-table th,.td-muted{font-size:.8rem} .search-input{min-height:44px} }
+@media (max-width: 640px) {
+  .pro-table th,
+  .td-muted {
+    font-size: 0.8rem;
+  }
+  .search-input {
+    min-height: 44px;
+  }
+}
+
+/* ══ Bouton / message d'ajout dans l'en-tête ══ */
+.pro-warn-inline {
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: #fffbeb;
+  border: 1.5px solid #fde68a;
+  color: #92400e;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+/* ══ Colonne actions ══ */
+.pro-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+.pro-icon-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1.5px solid var(--pro-border);
+  background: var(--pro-card);
+  color: #475569;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.13s;
+}
+.pro-icon-btn:hover {
+  border-color: var(--pro-blue);
+  color: var(--pro-blue);
+  background: var(--pro-blue-soft);
+}
+.pro-icon-btn-danger:hover {
+  border-color: #dc2626;
+  color: #dc2626;
+  background: rgba(220, 38, 38, 0.06);
+}
+.pro-icon-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ══ Modales (Teleport vers body → styles globaux nécessaires) ══ */
+:deep(.h-overlay) {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 16px;
+}
+:deep(.h-modal) {
+  background: #fff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.2);
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+}
+:deep(.h-modal-lg) {
+  max-width: 640px;
+}
+:deep(.h-modal-head) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid #e2e8f0;
+}
+:deep(.h-modal-title) {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+}
+:deep(.h-close-btn) {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1.5px solid #e2e8f0;
+  background: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  transition: all 0.13s;
+}
+:deep(.h-close-btn:hover) {
+  border-color: #dc2626;
+  color: #dc2626;
+}
+:deep(.h-modal-body) {
+  padding: 20px 24px;
+  overflow-y: auto;
+}
+:deep(.h-modal-foot) {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 16px 24px 20px;
+  border-top: 1px solid #e2e8f0;
+}
+:deep(.h-modal-sub) {
+  font-size: 0.82rem;
+  color: #64748b;
+  margin: 0 0 14px;
+}
+:deep(.h-form-grid) {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+:deep(.h-field) {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+:deep(.h-lbl) {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #475569;
+}
+:deep(.h-req) {
+  color: #dc2626;
+}
+:deep(.h-inp) {
+  padding: 9px 12px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.88rem;
+  color: #0f172a;
+  background: #fff;
+  outline: none;
+  transition: border-color 0.15s;
+  width: 100%;
+  box-sizing: border-box;
+}
+:deep(.h-inp:focus) {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+:deep(.h-inp-err) {
+  border-color: #dc2626 !important;
+}
+:deep(.h-field-err) {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: #dc2626;
+}
+:deep(.h-btn) {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 18px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1.5px solid transparent;
+  transition: all 0.15s;
+}
+:deep(.h-btn:disabled) {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+:deep(.h-btn-primary) {
+  background: #2563eb;
+  color: #fff;
+  border-color: #2563eb;
+}
+:deep(.h-btn-primary:hover:not(:disabled)) {
+  background: #1d4ed8;
+}
+:deep(.h-btn-ghost) {
+  background: transparent;
+  border-color: #e2e8f0;
+  color: #475569;
+}
+:deep(.h-btn-ghost:hover) {
+  border-color: #94a3b8;
+}
+:deep(.h-btn-danger) {
+  background: #dc2626;
+  color: #fff;
+  border-color: #dc2626;
+}
+:deep(.h-btn-danger:hover) {
+  background: #b91c1c;
+}
+:deep(.h-del-icon) {
+  margin-bottom: 14px;
+}
+:deep(.h-del-text) {
+  color: #64748b;
+  margin: 0;
+  line-height: 1.6;
+}
+:deep(.h-error) {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 0.83rem;
+  font-weight: 600;
+  margin-bottom: 14px;
+}
+@media (max-width: 520px) {
+  :deep(.h-form-grid) {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ══ Toast ══ */
+:deep(.h-toast) {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: #fff;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.25);
+  max-width: calc(100vw - 32px);
+}
+:deep(.h-toast-success) {
+  background: #059669;
+}
+:deep(.h-toast-error) {
+  background: #dc2626;
+}
+.toast-slide-enter-active,
+.toast-slide-leave-active {
+  transition: all 0.28s ease;
+}
+.toast-slide-enter-from,
+.toast-slide-leave-to {
+  opacity: 0;
+  transform: translate(-50%, 12px);
+}
 </style>

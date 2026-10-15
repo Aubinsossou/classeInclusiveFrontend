@@ -77,7 +77,7 @@
             </div>
             
             <div class="modal-body">
-              <form @submit.prevent="submitForm" id="course-form" class="modal-form">
+              <form ref="formEl" @submit.prevent="submitForm" id="course-form" class="modal-form">
                 
                 <div class="field">
                   <label for="fc-title" class="field-label">Titre du cours <span class="req" aria-hidden="true">*</span></label>
@@ -153,11 +153,15 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
+import { useFormValidation } from '@/composables/useFormValidation'
 
 const router = useRouter()
 const activeFilter = ref(null)
+
+const formEl = ref(null)
+const { validate, attach } = useFormValidation()
 
 // --- DONNÉES SIMULÉES ---
 const subjects = [
@@ -210,6 +214,8 @@ function openEditModal(course) {
     level: course.level
   })
   showFormModal.value = true
+  // la modale n'existe qu'après rendu → on branche la validation live
+  nextTick(() => attach(formEl.value))
 }
 
 function closeFormModal() {
@@ -217,6 +223,7 @@ function closeFormModal() {
 }
 
 function submitForm() {
+  if (!validate(formEl.value)) return
   const index = coursesData.value.findIndex(c => c.id === form.id)
   if (index !== -1) {
     coursesData.value[index] = { ...coursesData.value[index], ...form }

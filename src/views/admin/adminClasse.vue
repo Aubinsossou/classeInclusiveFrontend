@@ -1,7 +1,12 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { apiGet, apiPost, apiPut, apiDelete } from '@/helpers/axiosApi'
 import LoadingEcole from '@/components/admin/LoadingEcole.vue'
+import { useFormValidation } from '@/composables/useFormValidation'
+
+const { validate, attach } = useFormValidation()
+const formAddEl = ref(null)
+const formEditEl = ref(null)
 
 const loading = ref(false)
 
@@ -62,6 +67,7 @@ const apiGetUser = async () => {
 }
 
 const apiPostClasse = () => {
+  if (!validate(formAddEl.value)) return
   const response = apiPost('/ecole/classe/store', {
     name: formData.value.name,
     ecole_id: userAuth.value?.data?.id,
@@ -82,9 +88,12 @@ const affiche = async (id) => {
   const response = await apiGet('ecole/classe/edit/' + id)
   classeEdit.value = response.data
   classeUpdateId.value = id
+  // le formulaire n'existe qu'après rendu du v-if → on branche la validation live
+  nextTick(() => attach(formEditEl.value))
 }
 
 const apiClasseUpdate = (classeUpdateId) => {
+  if (!validate(formEditEl.value)) return
   const response = apiPut('ecole/classe/update/' + classeUpdateId, {
     name: classeEdit.value.data.name,
     ecole_id: userAuth.value?.data.id,
@@ -105,6 +114,8 @@ onMounted(async () => {
   await apiGetUser()
   await apiGEtListeClasse(userAuth.value?.data.id)
   loading.value = false
+  // formulaire d'ajout monté via v-show → déjà présent au montage
+  attach(formAddEl.value)
 })
 </script>
 
@@ -260,10 +271,10 @@ onMounted(async () => {
         <h2>Modifier une classe</h2>
       </div>
       <div class="middle_overlay">
-        <form class="form_grid">
+        <form ref="formEditEl" class="form_grid">
           <div class="field">
             <label>Nom de la classe</label>
-            <input type="text" v-model="classeEdit.data.name" />
+            <input type="text" v-model="classeEdit.data.name" required />
           </div>
         </form>
       </div>
@@ -285,10 +296,10 @@ onMounted(async () => {
         <h2>Ajouter une classe</h2>
       </div>
       <div class="middle_overlay">
-        <form class="form_grid">
+        <form ref="formAddEl" class="form_grid">
           <div class="field">
             <label>Nom de la classe</label>
-            <input type="text" v-model="formData.name" placeholder="Ex: CP-A, CE1-B…" />
+            <input type="text" v-model="formData.name" placeholder="Ex: CP-A, CE1-B…" required />
           </div>
         </form>
       </div>

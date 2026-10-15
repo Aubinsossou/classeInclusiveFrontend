@@ -1,8 +1,13 @@
 <script setup>
-import { ref, onMounted,watch } from 'vue'
+import { ref, onMounted,watch, nextTick } from 'vue'
 import { apiPost, apiGet, apiPut, apiDelete,formatDate } from '@/helpers/axiosApi'
 import LoadingEcole from '@/components/admin/LoadingEcole.vue'
+import { useFormValidation } from '@/composables/useFormValidation'
 const loading = ref(false)
+
+const { validate, attach } = useFormValidation()
+const formAddEl = ref(null)
+const formEditEl = ref(null)
 
 
 const infoOfRegister = ref()
@@ -53,6 +58,7 @@ const apiGetListeEnseignant = async (id) => {
 /* Api pour le register de l'enseignant */
 
 const apiRegisterEnseignant = async () => {
+  if (!validate(formAddEl.value)) return
   try {
     const response = await apiPost('/ecole/enseignant/registerEnseignant', {
       name: formData.value.nom,
@@ -75,6 +81,7 @@ const apiRegisterEnseignant = async () => {
 /* Api update enseignant  */
 
 const apiPutEnseignant = async (id) => {
+  if (!validate(formEditEl.value)) return
   const response = await apiPut('/ecole/enseignant/update/' + id, {
     name: nameUpdate.value,
     email: emailUpdate.value,
@@ -138,6 +145,8 @@ const formConsole = () => {
 const showForm_ajout = ref(false)
 const toggleForm_ajout = () => {
   showForm_ajout.value = !showForm_ajout.value
+  // le formulaire n'existe qu'après rendu du v-if → on branche la validation live
+  if (showForm_ajout.value) nextTick(() => attach(formAddEl.value))
 }
 
 //Script d'apparition et de disparition du formulaire d'update
@@ -146,6 +155,7 @@ const toggleForm_update = async (id) => {
   showForm_update.value = !showForm_update.value
   enseignantEdit.value = await apiGetEnseignantAssigneClasse(id)
   console.log(' enseignantEdit.value: ',  enseignantEdit.value);
+  if (showForm_update.value) nextTick(() => attach(formEditEl.value))
 }
 const enseignantAssigneClasse = ref()
 //Script d'apparition et de disparition du formulaire d'attribution de classe
@@ -389,15 +399,15 @@ watch(listeClasse, (newVal) => {
         <button @click="toggleForm_ajout()" class="form_reduct_button">x</button>
       </div>
       <div class="form_ajout">
-        <form action="Ajouter" method="post" @submit.prevent="apiRegisterEnseignant">
+        <form ref="formAddEl" action="Ajouter" method="post" @submit.prevent="apiRegisterEnseignant">
           <div class="form_grid">
             <div class="form_grid_input">
               <label for="nom">Nom</label>
-              <input type="text" placeholder="Nom" v-model="formData.nom" />
+              <input type="text" placeholder="Nom" v-model="formData.nom" required />
             </div>
             <div class="form_grid_input">
               <label for="Prénom">Prénom</label>
-              <input type="text" placeholder="Prénom" v-model="formData.prenom" />
+              <input type="text" placeholder="Prénom" v-model="formData.prenom" required />
             </div>
             <div class="form_grid_input">
               <label for="Numéro">Téléphone</label>
@@ -405,11 +415,11 @@ watch(listeClasse, (newVal) => {
             </div>
             <div class="form_grid_input">
               <label for="Email">Email</label>
-              <input type="email" placeholder="*******@gmail.com" v-model="formData.email" />
+              <input type="email" placeholder="*******@gmail.com" v-model="formData.email" required />
             </div>
             <div class="form_grid_input">
               <label for="matricule">Matricule</label>
-              <input type="text" id="matricule" v-model="formData.matricule" />
+              <input type="text" id="matricule" v-model="formData.matricule" required />
             </div>
           </div>
           <div class="form_button">
@@ -429,7 +439,7 @@ watch(listeClasse, (newVal) => {
         <button @click="toggleForm_update()" class="form_reduct_button">x</button>
       </div>
       <div class="form_ajout" v-if="enseignantEdit">
-        <form method="post">
+        <form ref="formEditEl" method="post">
           <div class="form_grid">
             <div class="form_grid_input">
               <label for="nameUpdate"> Nom</label>
@@ -439,6 +449,7 @@ watch(listeClasse, (newVal) => {
                 v-model="enseignantEdit.data.name"
                 id="nameUpdate"
                 name="nameUpdate"
+                required
               />
             </div>
             <div class="form_grid_input">
@@ -448,6 +459,7 @@ watch(listeClasse, (newVal) => {
                 id="prenomUpdate"
                 placeholder="Prénom"
                 v-model="enseignantEdit.data.prenom"
+                required
               />
             </div>
             <div class="form_grid_input">
@@ -466,6 +478,7 @@ watch(listeClasse, (newVal) => {
                 id="emailUpdate"
                 placeholder="*******@gmail.com"
                 v-model="enseignantEdit.data.email"
+                required
               />
             </div>
             <div class="form_grid_input">

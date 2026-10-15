@@ -1,7 +1,9 @@
 <script setup>
-import { ref, h } from 'vue'
+import { ref, h, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { apiPost } from '@/helpers/axiosApi'
+import PasswordInput from '@/components/PasswordInput.vue'
+import { useFormValidation } from '@/composables/useFormValidation'
 
 function getIconInner(name) {
   switch (name) {
@@ -47,6 +49,11 @@ const email = ref('')
 const password = ref('')
 const error = ref('')
 const isLoading = ref(false)
+const formEl = ref(null)
+const { validate, attach } = useFormValidation()
+let detachLive = null
+onMounted(() => { detachLive = attach(formEl.value) })
+onBeforeUnmount(() => { detachLive && detachLive() })
 
 const apiLoginEcole = async () => {
   const response = await apiPost('ecole/login', {
@@ -60,10 +67,7 @@ const apiLoginEcole = async () => {
 async function handleLogin() {
   error.value = ''
 
-  if (!email.value || !password.value) {
-    error.value = 'Veuillez remplir tous les champs.'
-    return
-  }
+  if (!validate(formEl.value)) return
 
   isLoading.value = true
 
@@ -147,7 +151,7 @@ async function handleLogin() {
           </div>
         </Transition>
 
-        <form @submit.prevent="handleLogin" class="lc-form" novalidate>
+        <form ref="formEl" @submit.prevent="handleLogin" class="lc-form" novalidate>
           <div class="pro-field">
             <label for="l-email" class="pro-label">Adresse e-mail</label>
             <div class="lc-input-wrap">
@@ -168,10 +172,9 @@ async function handleLogin() {
             <label for="l-pass" class="pro-label">Mot de passe</label>
             <div class="lc-input-wrap">
               <AppIcon name="lock" :size="16" class="lc-input-icon" />
-              <input
+              <PasswordInput
                 id="l-pass"
                 v-model="password"
-                type="password"
                 class="pro-input lc-input-padded"
                 placeholder="••••••••"
                 autocomplete="current-password"

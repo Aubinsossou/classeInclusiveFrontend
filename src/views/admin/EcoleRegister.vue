@@ -1,7 +1,9 @@
 <script setup>
-import { ref, reactive, h } from 'vue'
+import { ref, reactive, h, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { apiPost } from '@/helpers/axiosApi'
+import PasswordInput from '@/components/PasswordInput.vue'
+import { useFormValidation } from '@/composables/useFormValidation'
 
 // ============================================================================
 // 1. COMPOSANT ICONE AUTONOME
@@ -37,6 +39,11 @@ const AppIcon = (props, { attrs }) => {
 const router    = useRouter()
 const error     = ref('')
 const isLoading = ref(false)
+const formEl    = ref(null)
+const { validate, attach } = useFormValidation()
+let detachLive = null
+onMounted(() => { detachLive = attach(formEl.value) })
+onBeforeUnmount(() => { detachLive && detachLive() })
 
 const form = reactive({
   name:            '',
@@ -61,10 +68,7 @@ async function handleRegister() {
   error.value = ''
 
   // ── Validation ─────────────────────────────────────────────
-  if (!form.name || !form.email || !form.numero || !form.password || !form.confirmPassword) {
-    error.value = 'Veuillez remplir tous les champs.'
-    return
-  }
+  if (!validate(formEl.value)) return
 
   if (form.password !== form.confirmPassword) {
     error.value = 'Les mots de passe ne correspondent pas.'
@@ -152,7 +156,7 @@ async function handleRegister() {
           </div>
         </Transition>
 
-        <form @submit.prevent="handleRegister" class="lc-form" novalidate>
+        <form ref="formEl" @submit.prevent="handleRegister" class="lc-form" novalidate>
 
           <!-- Nom de l'établissement -->
           <div class="pro-field">
@@ -193,7 +197,7 @@ async function handleRegister() {
               <label for="r-pass" class="pro-label">Mot de passe</label>
               <div class="lc-input-wrap">
                 <AppIcon name="lock" :size="16" class="lc-input-icon" />
-                <input id="r-pass" v-model="form.password" type="password"
+                <PasswordInput id="r-pass" v-model="form.password"
                   class="pro-input lc-input-padded"
                   placeholder="••••••••" required />
               </div>
@@ -203,7 +207,7 @@ async function handleRegister() {
               <label for="r-pass-conf" class="pro-label">Confirmation</label>
               <div class="lc-input-wrap">
                 <AppIcon name="check" :size="16" class="lc-input-icon" />
-                <input id="r-pass-conf" v-model="form.confirmPassword" type="password"
+                <PasswordInput id="r-pass-conf" v-model="form.confirmPassword"
                   class="pro-input lc-input-padded"
                   placeholder="••••••••" required />
               </div>

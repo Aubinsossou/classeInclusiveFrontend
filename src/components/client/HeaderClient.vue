@@ -75,6 +75,9 @@ onMounted(loadClient)
         @click="mobileOpen = false"
       >{{ l.label }}</RouterLink>
       <RouterLink to="/client/profil" active-class="active" class="hc-link" @click="mobileOpen = false">Profil</RouterLink>
+      <button type="button" class="logout-mobile" @click="mobileOpen = false; handleLogout()">
+        Déconnexion
+      </button>
     </nav>
 
     <div class="header-part3">
@@ -97,8 +100,18 @@ onMounted(loadClient)
 }
 .hc-brand { display: flex; align-items: center; gap: 10px; color: white; min-width: 0; }
 .hc-brand > div { min-width: 0; }
-.hc-logo { width: 56px; display: flex; align-items: center; }
-.hc-logo img { width: 100%; }
+.hc-logo {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+.hc-logo img { width: 100%; height: 100%; object-fit: contain; border-radius: 10px; }
 .logo-title { font-weight: 900; font-size: 1.25rem; line-height: 1; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .logo-desc { opacity: 0.7; color: white; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .header-part2 { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
@@ -112,9 +125,27 @@ onMounted(loadClient)
 }
 .header-part3-link2:hover { background: rgba(255,92,92,0.4); color: #fff; }
 .hc-burger { display: none; background: rgba(255,255,255,0.14); color: #fff; border: none; border-radius: 10px; padding: 8px 12px; cursor: pointer; }
+.logout-mobile { display: none; }
 @media (max-width: 1024px) {
   .hc-burger { display: inline-flex; }
   .header-part2 { display: none; width: 100%; flex-direction: column; align-items: stretch; }
   .header-part2.open { display: flex; }
+  .header-part3 { display: none; }
+  .logout-mobile {
+    display: block;
+    width: 100%;
+    margin-top: 8px;
+    padding: 11px 12px;
+    text-align: left;
+    font-family: inherit;
+    font-size: 0.92rem;
+    font-weight: 800;
+    color: #ff9090;
+    background: rgba(255,92,92,0.15);
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+  .logout-mobile:hover { background: rgba(255,92,92,0.4); color: #fff; }
 }
 </style>

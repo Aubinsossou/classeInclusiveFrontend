@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 import HeaderEcole from '@/components/admin/header.vue'
 import HeaderEnseignant from '@/components/admin/HeaderEnseignant.vue'
 import HeaderClient from '@/components/client/HeaderClient.vue'
+import FormErrorToast from '@/components/FormErrorToast.vue'
 
 const route = useRoute()
 const role = localStorage.getItem('role')
@@ -40,5 +41,7 @@ const isEleve = computed(() => route.meta.role === 'eleve')
     <main :style="isEleve ? {} : { background: '#f1f5f9', minHeight: '100vh' }">
       <RouterView />
     </main>
+    <!-- Petit modal rouge non bloquant : champs requis non remplis -->
+    <FormErrorToast />
   </div>
 </template>

@@ -43,3 +43,20 @@ button{
    contrôlé sur petit écran au lieu d'être tronqués */
 .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .table { min-width: 560px; }
+
+/* ── Validation des formulaires (voir composables/useFormValidation.js) ──
+   Bordure rouge + halo léger sur un champ requis non rempli, et petit
+   message inline « Ce champ est requis. » sous le champ. */
+.fe-invalid,
+.fe-invalid:focus {
+  border-color: #dc2626 !important;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15) !important;
+  outline-color: #dc2626;
+}
+.fe-msg {
+  display: block;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #dc2626;
+  margin-top: 3px;
+}

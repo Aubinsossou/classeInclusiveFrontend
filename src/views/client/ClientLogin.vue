@@ -1,17 +1,24 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { apiPost } from '@/helpers/axiosApi'
+import PasswordInput from '@/components/PasswordInput.vue'
+import { useFormValidation } from '@/composables/useFormValidation'
 const router = useRouter()
 const email = ref('')
 const password = ref('')
 const error = ref('')
 const busy = ref(false)
+const formEl = ref(null)
+const { validate, attach } = useFormValidation()
+let detachLive = null
+onMounted(() => { detachLive = attach(formEl.value) })
+onBeforeUnmount(() => { detachLive && detachLive() })
 function tokenOf(d) { return d?.access_token || d?.token || d?.data?.access_token || d?.data?.data?.access_token || '' }
 function isSuccessStatus(s) { return String(s || '').toLowerCase() === 'success' }
 async function submit() {
   error.value = ''
-  if (!email.value.trim() || !password.value) { error.value = 'Veuillez remplir tous les champs.'; return }
+  if (!validate(formEl.value)) return
   busy.value = true
   try {
     const r = await apiPost('client/login', { email: email.value.trim(), password: password.value })
@@ -43,11 +50,11 @@ async function submit() {
       <h1>Connexion</h1>
       <p class="cl-desc">Accédez à votre tableau de bord consultatif.</p>
       <p v-if="error" class="cl-err" role="alert">{{ error }}</p>
-      <form @submit.prevent="submit" novalidate>
+      <form ref="formEl" @submit.prevent="submit" novalidate>
         <label class="pro-label" for="c-email">Adresse e-mail</label>
         <input id="c-email" v-model="email" type="email" class="pro-input" placeholder="client@exemple.com" autocomplete="email" required />
         <label class="pro-label" for="c-pass">Mot de passe</label>
-        <input id="c-pass" v-model="password" type="password" class="pro-input" placeholder="••••••••" autocomplete="current-password" required />
+        <PasswordInput id="c-pass" v-model="password" class="pro-input" placeholder="••••••••" autocomplete="current-password" required />
         <button class="pro-btn pro-btn-primary pro-btn-lg cl-submit" :disabled="busy">{{ busy ? 'Connexion…' : 'Se connecter' }}</button>
       </form>
       <p class="cl-foot">Compte attribué par l’administrateur — aucune inscription publique.</p>
