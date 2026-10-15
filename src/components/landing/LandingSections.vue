@@ -70,6 +70,8 @@ h2{font-size:1.6rem;color:var(--pro-ink);letter-spacing:-.02em;margin-bottom:6px
 .ld-link{color:var(--pro-blue);font-weight:800;font-size:.84rem;text-decoration:none}
 .ld-link:hover{text-decoration:underline}
 .ld-hint{font-size:.76rem;color:var(--pro-muted);margin-top:10px}
+/* Lisibilité mobile : plancher 12px (racine 15px) + cible tactile ≥24px */
+@media(max-width:640px){ .ld-kicker,.ld-hint{font-size:.8rem} .ld-link{display:inline-block;padding:4px 0} }
 @media(max-width:900px){.ld-cols,.ld-grid,.ld-grid3,.ld-steps{grid-template-columns:1fr}}
 @media(max-width:480px){
   .ld-sec{padding:20px 20px}

@@ -55,6 +55,8 @@ h1 span{background:linear-gradient(90deg,#2563eb,#6d28d9);-webkit-background-cli
 .ld-mock-small{background:linear-gradient(160deg,#0f1b3e,#1d2f6e 60%,#6d28d9 130%);color:#fff;border:none}
 .ld-mock-voice{font-weight:800;margin-bottom:4px}
 .ld-mock-small .ld-mock-cap{color:rgba(255,255,255,.7)}
+/* Lisibilité mobile : plancher 12px (racine 15px) */
+@media(max-width:640px){ .ld-badge,.ld-note,.ld-mock-url,.ld-mock-cap{font-size:.8rem} }
 @media(max-width:900px){.ld-hero-grid{grid-template-columns:1fr}h1{font-size:2rem}}
 @media(max-width:480px){
   .ld-hero{padding:28px 20px 8px}

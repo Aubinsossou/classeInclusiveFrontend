@@ -1,7 +1,9 @@
 <script setup>
 import { apiPost } from '@/helpers/axiosApi'
-import { ref, reactive, h } from 'vue'
+import PasswordInput from '@/components/PasswordInput.vue'
+import { ref, reactive, h, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
+import { useFormValidation } from '@/composables/useFormValidation'
 
 // ============================================================================
 // 1. REPRODUCTION DE AppIcon.vue (Fonction de rendu)
@@ -53,6 +55,11 @@ const router = useRouter()
 const error = ref('')
 const isLoading = ref(false)
 const enseignantConnect = ref()
+const formEl = ref(null)
+const { validate, attach } = useFormValidation()
+let detachLive = null
+onMounted(() => { detachLive = attach(formEl.value) })
+onBeforeUnmount(() => { detachLive && detachLive() })
 
 // Regroupement des champs de formulaire
 const form = reactive({
@@ -84,12 +91,8 @@ async function handleLogin() {
   error.value = ''
 
   // 1. Validation
-  if (!form.email || !form.password) {
-    error.value = 'Veuillez remplir tous les champs.'
-    return
-  } else {
-    apiLoginEnseignant()
-  }
+  if (!validate(formEl.value)) return
+  apiLoginEnseignant()
   // // 2. Structuration des données (formData)
   // const formData = {
   //   email: form.email,
@@ -158,6 +161,7 @@ async function handleLogin() {
         </Transition>
 
         <form
+          ref="formEl"
           @submit.prevent="handleLogin"
           style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 28px"
           novalidate
@@ -204,10 +208,9 @@ async function handleLogin() {
                   pointer-events: none;
                 "
               />
-              <input
+              <PasswordInput
                 id="tl-pass"
                 v-model="form.password"
-                type="password"
                 class="pro-input"
                 style="padding-left: 36px"
                 placeholder="••••••••"

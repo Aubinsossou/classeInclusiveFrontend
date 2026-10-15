@@ -936,4 +936,6 @@ const formatDate = (d) => {
     display: none;
   }
 }
+/* Lisibilité mobile : plancher 12px (racine 15px) */
+@media(max-width:640px){ .filter-sep-label,.cc-chip{font-size:.8rem} }
 </style>

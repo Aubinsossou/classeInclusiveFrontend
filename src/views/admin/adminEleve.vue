@@ -1,8 +1,12 @@
 <script setup>
-import { ref, computed, reactive, onMounted } from 'vue'
+import { ref, computed, reactive, onMounted, nextTick } from 'vue'
 import { apiGet, apiPost, apiDelete } from '@/helpers/axiosApi'
 import LoadingEcole from '@/components/admin/LoadingEcole.vue'
 import codeToggle from '@/components/admin/codeToggle.vue'
+import { useFormValidation } from '@/composables/useFormValidation'
+
+const formEl = ref(null)
+const { validate, attach } = useFormValidation()
 
 //  Utilisateur connecté
 const userAuth = ref(null)
@@ -85,6 +89,8 @@ function openAdd() {
   editTarget.value = null
   resetForm()
   showForm.value = true
+  // la modale n'existe qu'après rendu du v-if → on branche la validation live
+  nextTick(() => attach(formEl.value))
 }
 
 const openEdit = (e) => {
@@ -99,6 +105,7 @@ const openEdit = (e) => {
     handicap_id: e.handicap_id ?? '',
   })
   showForm.value = true
+  nextTick(() => attach(formEl.value))
 }
 //  CRÉER ─
 const apiRegisterEleve = async () => {
@@ -134,7 +141,8 @@ const apiUpdateEleve = async () => {
 }
 
 const submitForm = async () => {
-  if (!form.name.trim() || !form.prenom.trim() || !form.classe_id || !userAuth.value) return
+  if (!userAuth.value) return
+  if (!validate(formEl.value)) return
   if (editTarget.value) {
     await apiUpdateEleve()
   } else {
@@ -354,15 +362,15 @@ onMounted(async () => {
             </div>
 
             <div class="h-modal-body">
-              <div class="h-form-grid">
+              <div ref="formEl" class="h-form-grid">
                 <div class="h-field">
                   <label class="h-lbl">Nom <span class="h-req">*</span></label>
-                  <input v-model="form.name" class="h-inp" placeholder="Ex : DUPONT" />
+                  <input v-model="form.name" class="h-inp" placeholder="Ex : DUPONT" required />
                 </div>
 
                 <div class="h-field">
                   <label class="h-lbl">Prénom <span class="h-req">*</span></label>
-                  <input v-model="form.prenom" class="h-inp" placeholder="Ex : Lucas" />
+                  <input v-model="form.prenom" class="h-inp" placeholder="Ex : Lucas" required />
                 </div>
 
                 <div class="h-field">
@@ -391,7 +399,7 @@ onMounted(async () => {
 
                 <div class="h-field">
                   <label class="h-lbl">Classe <span class="h-req">*</span></label>
-                  <select v-model="form.classe_id" class="h-inp">
+                  <select v-model="form.classe_id" class="h-inp" required>
                     <option value="">— Choisir —</option>
                     <option v-for="c in classes" :key="c.id" :value="c.id">{{ c.name }}</option>
                   </select>
@@ -412,7 +420,6 @@ onMounted(async () => {
               <button
                 class="h-btn h-btn-primary"
                 @click="submitForm"
-                :disabled="!form.name.trim() || !form.prenom.trim() || !form.classe_id"
               >
                 <svg
                   width="14"
@@ -605,6 +612,7 @@ onMounted(async () => {
   border-color: var(--blue);
 }
 .sel {
+  max-width: 100%;
   padding: 8px 12px;
   border: 1.5px solid var(--border);
   border-radius: var(--r);
@@ -622,7 +630,8 @@ onMounted(async () => {
   background: white;
   border: 1.5px solid var(--border);
   border-radius: var(--r-lg);
-  overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   box-shadow: var(--sh);
 }
 .table {
@@ -858,4 +867,6 @@ onMounted(async () => {
 .h-btn-danger:hover {
   background: #b91c1c;
 }
+/* Lisibilité mobile : plancher 12px (racine 15px) */
+@media(max-width:640px){ .table th,.badge{font-size:.8rem} }
 </style>

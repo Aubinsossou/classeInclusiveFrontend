@@ -397,4 +397,6 @@ onUnmounted(() => voice.stop())
 .ss-mention{ font-size:.8rem;color:var(--text2,#8B91B0);text-transform:uppercase;letter-spacing:.1em; }
 .ss-status { font-size:.78rem;color:var(--text3,#535878);letter-spacing:.08em;text-transform:uppercase;min-height:1.3em; }
 @media(max-width:900px) { .bv-body{grid-template-columns:1fr;height:auto;} .bv-student{min-height:200px;} .bv-panel{border-right:none;border-bottom:1px solid var(--border);} }
+/* Lisibilité malvoyant : plancher 12px (racine 15px) */
+.tr-label, .monitor-title, .cmd-key, .cmd-action, .tr-text, .vi-label, .vi-stop, .pa-btn, .qs-cur, .qs-score, .ss-status { font-size: 0.8rem; }
 </style>

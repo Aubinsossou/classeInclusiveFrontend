@@ -1,16 +1,23 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { apiPost } from '@/helpers/axiosApi'
+import PasswordInput from '@/components/PasswordInput.vue'
+import { useFormValidation } from '@/composables/useFormValidation'
 const router = useRouter()
 const form = ref({ name: '', email: '', numero: '', password: '', conf: '' })
 const error = ref('')
 const fieldErrors = ref({})
 const ok = ref('')
 const busy = ref(false)
+const formEl = ref(null)
+const { validate, attach } = useFormValidation()
+let detachLive = null
+onMounted(() => { detachLive = attach(formEl.value) })
+onBeforeUnmount(() => { detachLive && detachLive() })
 async function submit() {
   error.value = ''; ok.value = ''; fieldErrors.value = {}
-  if (!form.value.name.trim() || !form.value.email.trim() || !form.value.password || !form.value.conf) { error.value = 'Veuillez remplir tous les champs.'; return }
+  if (!validate(formEl.value)) return
   if (form.value.password !== form.value.conf) { error.value = 'Les mots de passe ne correspondent pas.'; return }
   if (form.value.password.length < 4) { error.value = 'Le mot de passe doit contenir au moins 4 caractères.'; return }
   busy.value = true
@@ -37,7 +44,7 @@ async function submit() {
       <p class="cl-desc">Inscrivez-vous pour consulter la plateforme.</p>
       <p v-if="error" class="cl-err" role="alert">{{ error }}</p>
       <p v-if="ok" class="cl-ok" role="status">{{ ok }}</p>
-      <form @submit.prevent="submit" novalidate>
+      <form ref="formEl" @submit.prevent="submit" novalidate>
         <label class="pro-label" for="r-name">Nom complet</label>
         <input id="r-name" v-model="form.name" class="pro-input" placeholder="Ex : Jean Dupont" required />
         <label class="pro-label" for="r-email">Adresse e-mail</label>
@@ -47,10 +54,10 @@ async function submit() {
         <input id="r-numero" v-model="form.numero" class="pro-input" placeholder="Ex : 0700000000" />
         <p v-if="fieldErrors.numero" class="cl-field-err">{{ Array.isArray(fieldErrors.numero) ? fieldErrors.numero[0] : fieldErrors.numero }}</p>
         <label class="pro-label" for="r-p1">Mot de passe (min. 4 caractères)</label>
-        <input id="r-p1" v-model="form.password" type="password" class="pro-input" placeholder="••••••••" required />
+        <PasswordInput id="r-p1" v-model="form.password" class="pro-input" placeholder="••••••••" autocomplete="new-password" required />
         <p v-if="fieldErrors.password" class="cl-field-err">{{ Array.isArray(fieldErrors.password) ? fieldErrors.password[0] : fieldErrors.password }}</p>
         <label class="pro-label" for="r-p2">Confirmation</label>
-        <input id="r-p2" v-model="form.conf" type="password" class="pro-input" placeholder="••••••••" required />
+        <PasswordInput id="r-p2" v-model="form.conf" class="pro-input" placeholder="••••••••" autocomplete="new-password" required />
         <button class="pro-btn pro-btn-primary pro-btn-lg cl-submit" :disabled="busy">{{ busy ? 'Création…' : 'Créer mon compte' }}</button>
       </form>
       <p class="cl-foot">Déjà inscrit ? <RouterLink :to="{ name: 'ClientLogin' }">Se connecter</RouterLink></p>
@@ -77,4 +84,6 @@ async function submit() {
 .cl-field-err{font-size:.76rem;color:#dc2626;font-weight:600;margin:-4px 0 2px}
 .cl-submit{width:100%;justify-content:center;margin-top:6px}
 .cl-foot{text-align:center;font-size:.85rem;color:#94a3b8}.cl-foot a{color:#6d28d9;font-weight:700;text-decoration:none}
+/* Lisibilité mobile : plancher 12px + cible tactile ≥24px */
+@media(max-width:640px){ .cl-tag{font-size:.8rem} .cl-foot a{display:inline-block;padding:5px 0} }
 </style>

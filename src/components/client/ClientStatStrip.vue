@@ -43,7 +43,7 @@ onMounted(load)
 
 <style scoped>
 .strip{padding:16px 18px;margin-bottom:14px}
-.strip-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.strip-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap}
 .strip-title{font-size:.92rem;font-weight:800;color:#0f172a}
 .strip-state{font-size:.82rem;color:#94a3b8;font-weight:600}
 .strip-err{color:#dc2626;background:rgba(220,38,38,.07);border:1px solid rgba(220,38,38,.18);border-radius:10px;padding:8px 12px}

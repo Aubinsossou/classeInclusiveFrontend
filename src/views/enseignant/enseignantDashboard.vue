@@ -847,4 +847,6 @@ onMounted(() => {
     padding: 8px 4px;
   }
 }
+/* Lisibilité mobile : plancher 12px + cible tactile ≥24px */
+@media(max-width:640px){ .card-body-action,.stat-card-content-card-1-footer{font-size:.8rem} .en-tete-card-lien{display:inline-block;padding:4px 0} }
 </style>

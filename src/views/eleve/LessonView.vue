@@ -4,6 +4,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { apiGet, apiPost } from '@/helpers/axiosApi'
 import { useVoiceEngine } from '@/composables/useVoiceEngine'
 import AppTopbar from '@/components/eleve/AppTopbar.vue'
+import { useFormValidation } from '@/composables/useFormValidation'
 
 const router = useRouter()
 const route = useRoute()
@@ -224,6 +225,13 @@ const handleLogout = async () => {
 // État réactif pour gérer la visibilité du formulaire de retour et projection
 const isFormVisible = ref(false)
 
+const bilanFormEl = ref(null)
+const { validate, attach } = useFormValidation()
+// le formulaire n'existe qu'à l'ouverture → on branche la validation live
+watch(isFormVisible, (v) => {
+  if (v) nextTick(() => attach(bilanFormEl.value))
+})
+
 // État pour stocker les réponses du formulaire
 const formBilan = ref({
   appris: '',
@@ -234,11 +242,8 @@ const formBilan = ref({
 
 // Fonction de validation et d'envoi
 const submitBilan = async () => {
-  // Vérification : on s'assure qu'au moins un champ n'est pas vide
-  if (!formBilan.value.appris.trim() || !formBilan.value.action.trim()) {
-    alert("S'il te plaît, remplis au moins ce que tu as appris et ce que tu comptes en faire.")
-    return
-  }
+  // Vérification : les champs requis doivent être remplis
+  if (!validate(bilanFormEl.value)) return
 
   // Logique d'envoi (ex: appel API vers Laravel)
   console.log('Bilan envoyé :', { ...formBilan.value })
@@ -703,15 +708,16 @@ onUnmounted(() => {
       </div>
 
       <section class="content-block block--text" v-if="isFormVisible">
-        <form class="feedback-form" @submit.prevent="submitBilan">
+        <form ref="bilanFormEl" class="feedback-form" @submit.prevent="submitBilan">
           <div class="form-group">
-            <label for="q-appris" class="content-h">Qu'as-tu appris ?</label>
+            <label for="q-appris" class="content-h">Qu'as-tu appris ? *</label>
             <textarea
               id="q-appris"
               v-model="formBilan.appris"
               class="form-input"
               rows="3"
               placeholder="Écris ta réponse ici..."
+              required
             ></textarea>
           </div>
 
@@ -741,7 +747,7 @@ onUnmounted(() => {
 
           <div class="form-group">
             <label for="q-action" class="content-h"
-              >Que penses-tu faire de ce que tu as appris ?</label
+              >Que penses-tu faire de ce que tu as appris ? *</label
             >
             <textarea
               id="q-action"
@@ -749,6 +755,7 @@ onUnmounted(() => {
               class="form-input"
               rows="3"
               placeholder="Comment vas-tu utiliser ces nouvelles connaissances ?"
+              required
             ></textarea>
           </div>
 
@@ -1505,4 +1512,8 @@ onUnmounted(() => {
   color: #5c4e3e;
   line-height: 1.55;
 }
+/* Lisibilité mobile : plancher 12px pour la micro-typographie */
+@media(max-width:640px){ .typo-val{font-size:.8rem} }
+/* Débordement 320px : lignes de leçon contraintes + passage sur deux lignes */
+@media(max-width:640px){ .cta-inner{flex-wrap:wrap;max-width:100%} .form-intro{flex-wrap:wrap} }
 </style>

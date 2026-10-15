@@ -630,3 +630,13 @@ h1, h2, h3 { overflow-wrap: break-word; }
 @media (max-width: 480px) {
   .pro-btn { white-space: normal; text-align: center; }
 }
+
+/* Lisibilité mobile : plancher de 12px (0.8rem × racine 15px) pour la
+   micro-typographie qui passait sous le seuil (th, badges, liens compacts) */
+@media (max-width: 640px) {
+  .pro-table th { font-size: 0.8rem; }
+  .pro-table .td-muted { font-size: 0.8rem; }
+  .pro-badge { font-size: 0.8rem; }
+  .pro-btn-sm { font-size: 0.8rem; }
+  .pro-status { font-size: 0.8rem; }
+}

@@ -1,7 +1,12 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
 import { apiGet, apiPost, apiDelete } from '@/helpers/axiosApi'
 import LoadingEcole from '@/components/admin/LoadingEcole.vue'
+import { useFormValidation } from '@/composables/useFormValidation'
+
+const { validate, attach } = useFormValidation()
+const formAddEl = ref(null)
+const formEditEl = ref(null)
 const loading = ref(false)
 
 // ── Utilisateur connecté ───────────────────────────────────────
@@ -38,12 +43,15 @@ const toggleForm_ajout = () => {
   editTarget.value = null
   formName.value = ''
   showModalAjout.value = !showModalAjout.value
+  // la modale n'existe qu'après rendu du v-if → on branche la validation live
+  if (showModalAjout.value) nextTick(() => attach(formAddEl.value))
 }
 
 const openEdit = (matiere) => {
   editTarget.value = matiere
   formName.value = matiere.name
   showModalupdate.value = true
+  nextTick(() => attach(formEditEl.value))
 }
 
 const toggleForm_update = () => {
@@ -61,6 +69,7 @@ const toggleForm_delete = () => {
 
 //  CRÉER 
 const apiPostMatiere = async () => {
+  if (!validate(formAddEl.value)) return
   const response = await apiPost('ecole/matiere/store', {
     name: formName.value.trim(),
     ecole_id: userAuth.value?.data?.id,
@@ -72,6 +81,7 @@ const apiPostMatiere = async () => {
 
 //  MODIFIER 
 const apiUpdateMatiere = async () => {
+  if (!validate(formEditEl.value)) return
   const response = await apiPost(`ecole/matiere/update/${editTarget.value.id}`, {
     name: formName.value.trim(),
     ecole_id: userAuth.value.id,
@@ -264,13 +274,14 @@ onMounted(async () => {
           <button @click.prevent="toggleForm_ajout" class="form_reduct_button">x</button>
         </div>
         <div class="form_ajout">
-          <div class="form_grid">
+          <div ref="formAddEl" class="form_grid">
             <div class="form_grid_input">
               <label>Nom de la matière</label>
               <input
                 v-model="formName"
                 type="text"
                 placeholder="Ex : Mathématiques"
+                required
                 @keydown.enter.prevent="apiPostMatiere"
                 @keydown.escape="toggleForm_ajout"
               />
@@ -283,7 +294,6 @@ onMounted(async () => {
           </button>
           <button
             class="button_ajouter button_special"
-            :disabled="!formName.trim()"
             @click.prevent="apiPostMatiere"
           >
             + Ajouter
@@ -302,13 +312,14 @@ onMounted(async () => {
           <button @click.prevent="toggleForm_update" class="form_reduct_button">x</button>
         </div>
         <div class="form_ajout">
-          <div class="form_grid">
+          <div ref="formEditEl" class="form_grid">
             <div class="form_grid_input">
               <label>Nom de la matière</label>
               <input
                 v-model="formName"
                 type="text"
                 placeholder="Ex : Mathématiques"
+                required
                 @keydown.enter.prevent="apiUpdateMatiere"
                 @keydown.escape="toggleForm_update"
               />
@@ -319,7 +330,6 @@ onMounted(async () => {
           <button @click="toggleForm_update" class="button_annuler button_special">Annuler</button>
           <button
             class="button_ajouter button_special"
-            :disabled="!formName.trim()"
             @click.prevent="apiUpdateMatiere"
           >
             Enregistrer
@@ -756,4 +766,6 @@ onMounted(async () => {
   .classes_container { padding: 14px; }
   .delete_body_svg { height: 70px; width: 70px; }
 }
+/* Lisibilité mobile : plancher 12px (racine 15px) */
+@media(max-width:640px){ .sc-footer-txt{font-size:.8rem} }
 </style>

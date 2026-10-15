@@ -8,6 +8,9 @@ import TextAlign from '@tiptap/extension-text-align'
 import Underline from '@tiptap/extension-underline'
 import { TextStyle } from '@tiptap/extension-text-style'
 import LoadingView from '@/components/admin/Loading.vue'
+import { useFormToast } from '@/composables/useFormToast'
+
+const { show: showToast } = useFormToast()
 
 const svgPaths = {
   plus: '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
@@ -253,6 +256,16 @@ const submitForm = async (publish = null) => {
   if (!form.classe_id) errors.value.classe_id = 'Aucune classe assignée.'
   if (Object.keys(errors.value).length) {
     saving.value = false
+    // Petit modal rouge non bloquant listant les champs manquants
+    const LABELS = { title: 'Titre', matiere_id: 'Matière', classe_id: 'Classe' }
+    showToast(
+      Object.keys(errors.value)
+        .filter((key) => LABELS[key])
+        .map((key) => ({
+          el: document.getElementById(`cfv-${key}`),
+          label: LABELS[key],
+        })),
+    )
     return
   }
 
@@ -401,12 +414,14 @@ function mediaBg(type) {
           <section class="cfv-card">
             <h2 class="cfv-section-title">Informations générales</h2>
             <div class="field">
-              <label class="field-label">Titre <span class="req">*</span></label>
+              <label class="field-label" for="cfv-title">Titre <span class="req">*</span></label>
               <input
+                id="cfv-title"
                 v-model="form.title"
                 class="pro-input"
                 :class="{ 'pro-input-error': errors.title }"
                 placeholder="Ex : Introduction aux fractions"
+                required
               />
               <span v-if="errors.title" class="field-error">{{ errors.title }}</span>
             </div>
@@ -452,14 +467,14 @@ function mediaBg(type) {
                 :class="{ 'tt-active': editor.isActive('heading', { level: 2 }) }"
                 @click="editor.chain().focus().toggleHeading({ level: 2 }).run()"
               >
-                <span style="font-size: 0.75rem; font-weight: 800">H2</span>
+                <span style="font-size: 0.8rem; font-weight: 800">H2</span>
               </button>
               <button
                 class="tt-btn"
                 :class="{ 'tt-active': editor.isActive('heading', { level: 3 }) }"
                 @click="editor.chain().focus().toggleHeading({ level: 3 }).run()"
               >
-                <span style="font-size: 0.75rem; font-weight: 800">H3</span>
+                <span style="font-size: 0.8rem; font-weight: 800">H3</span>
               </button>
               <div class="tt-sep"></div>
               <button
@@ -686,11 +701,13 @@ function mediaBg(type) {
             <h2 class="cfv-section-title">Paramètres</h2>
 
             <div class="field">
-              <label class="field-label">Matière <span class="req">*</span></label>
+              <label class="field-label" for="cfv-matiere_id">Matière <span class="req">*</span></label>
               <select
+                id="cfv-matiere_id"
                 v-model="form.matiere_id"
                 class="pro-input"
                 :class="{ 'pro-input-error': errors.matiere_id }"
+                required
               >
                 <option :value="null">— Choisir une matière —</option>
                 <option v-for="m in mySubjects" :key="m.id" :value="m.id">{{ m.name }}</option>
@@ -1489,4 +1506,6 @@ function mediaBg(type) {
   color: var(--pro-red);
   border-color: #fecaca;
 }
+/* Lisibilité mobile : plancher 12px (racine 15px) */
+@media(max-width:640px){ .cfv-badge,.cfv-section-sub,.prog-sub,.prog-reset-btn,.field-label{font-size:.8rem} }
 </style>

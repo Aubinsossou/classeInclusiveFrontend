@@ -2,6 +2,9 @@
 import { ref, computed, reactive, onMounted, onUnmounted, nextTick, h } from 'vue'
 import { apiGet, apiPost, apiDelete } from '@/helpers/axiosApi'
 import LoadingView from '@/components/admin/Loading.vue'
+import { useFormToast } from '@/composables/useFormToast'
+
+const { show: showToast } = useFormToast()
 
 
 function getIconInner(name) {
@@ -115,6 +118,9 @@ const createLoading   = ref(false)
 
 const filteredCoursCreate = computed(() => getCoursByMatiere(createMatiereId.value))
 
+// conteneur des champs de création (pas de balise <form> ici)
+const createBoxEl = ref(null)
+
 function openCreate() {
   creating.value        = true
   createName.value      = ''
@@ -128,7 +134,18 @@ function onMatiereChange() {
 }
 
 const submitCreateQuiz = async () => {
-  if (!createName.value.trim() || !createCoursId.value) return
+  if (!createName.value.trim() || !createCoursId.value) {
+    // Petit modal rouge non bloquant listant les champs manquants
+    const missing = []
+    if (!createName.value.trim()) {
+      missing.push({ el: createBoxEl.value?.querySelector('input'), label: 'Titre du quiz' })
+    }
+    if (!createCoursId.value) {
+      missing.push({ el: createBoxEl.value?.querySelector('select:not([disabled])'), label: 'Cours associé' })
+    }
+    showToast(missing)
+    return
+  }
   createLoading.value = true
   try {
     await apiPost('quiz/store', {
@@ -161,7 +178,10 @@ const questionLoading = ref(false)
 
 const submitQuestion = async () => {
   const text = questionDraft.value.trim()
-  if (!text || !activeQuiz.value) return
+  if (!text || !activeQuiz.value) {
+    if (!text) showToast([{ el: document.getElementById('qv-question'), label: 'Question' }])
+    return
+  }
   questionLoading.value = true
   try {
     await apiPost('question/store', {
@@ -199,7 +219,10 @@ function openAddReponse(qu) {
 
 const submitReponse = async (qu) => {
   const text = (reponseDraft[qu.id] || '').trim()
-  if (!text) return
+  if (!text) {
+    showToast([{ el: reponseInputs[qu.id], label: 'Réponse' }])
+    return
+  }
   await apiPost('reponse/store', {
     question_id: qu.id,
     listReponse: [{ name: text, status: correctDraft[qu.id] ? 'correct' : 'incorrect' }],
@@ -362,14 +385,16 @@ onUnmounted(() => { stopPolling() })
               <div class="create-box-icon"><AppIcon name="plus" :size="16" /></div>
               <span>Nouveau quiz</span>
             </div>
-            <div class="create-box-fields">
+            <div ref="createBoxEl" class="create-box-fields">
               <div class="cbf-field" style="grid-column:1/-1">
-                <label class="cbl">Titre du quiz <span class="req">*</span></label>
+                <label class="cbl" for="qv-create-name">Titre du quiz <span class="req">*</span></label>
                 <input
+                  id="qv-create-name"
                   v-model="createName"
                   class="pro-input"
                   placeholder="Ex : Quiz sur les additions…"
                   autofocus
+                  required
                   @keydown.escape="creating = false"
                 />
               </div>
@@ -381,8 +406,8 @@ onUnmounted(() => { stopPolling() })
                 </select>
               </div>
               <div class="cbf-field">
-                <label class="cbl">Cours associé <span class="req">*</span></label>
-                <select v-model="createCoursId" class="pro-input" :disabled="!filteredCoursCreate.length">
+                <label class="cbl" for="qv-create-cours">Cours associé <span class="req">*</span></label>
+                <select id="qv-create-cours" v-model="createCoursId" class="pro-input" :disabled="!filteredCoursCreate.length" required>
                   <option :value="null">
                     {{ filteredCoursCreate.length ? '— Choisir un cours —' : 'Aucun cours disponible' }}
                   </option>
@@ -395,7 +420,7 @@ onUnmounted(() => { stopPolling() })
               <button
                 class="pro-btn pro-btn-green pro-btn-sm"
                 @click="submitCreateQuiz"
-                :disabled="!createName.trim() || !createCoursId || createLoading"
+                :disabled="createLoading"
               >
                 <AppIcon name="check" :size="13" />
                 {{ createLoading ? 'Création…' : 'Créer et ajouter des questions' }}
@@ -541,7 +566,7 @@ onUnmounted(() => { stopPolling() })
                     <option :value="true">Correcte</option>
                     <option :value="false">Incorrecte</option>
                   </select>
-                  <button class="aaf-submit" :disabled="!reponseDraft[qu.id]?.trim()" @click="submitReponse(qu)">
+                  <button class="aaf-submit" @click="submitReponse(qu)">
                     <AppIcon name="check" :size="13" />
                   </button>
                   <button class="aaf-cancel" @click="addingReponseTo = null">
@@ -560,16 +585,18 @@ onUnmounted(() => { stopPolling() })
             <div class="qaf-header">
               <div class="qcard-num qcard-num-ghost">{{ (activeQuiz.questions?.length ?? 0) + 1 }}</div>
               <input
+                id="qv-question"
                 v-model="questionDraft"
                 class="qaf-input"
                 placeholder="Écrire la question ici…"
+                required
                 @keydown.enter.prevent="submitQuestion"
                 @keydown.escape="addingQuestion = false"
                 autofocus
               />
               <button
                 class="pro-btn pro-btn-green pro-btn-sm"
-                :disabled="!questionDraft.trim() || questionLoading"
+                :disabled="questionLoading"
                 @click="submitQuestion"
               >
                 <AppIcon name="check" :size="13" />
@@ -639,6 +666,7 @@ onUnmounted(() => { stopPolling() })
               <AppIcon name="results" :size="16" /> Notes des élèves
             </h2>
           </div>
+          <div class="results-scroll">
           <table class="results-table">
             <thead>
               <tr>
@@ -679,6 +707,7 @@ onUnmounted(() => { stopPolling() })
               </tr>
             </tbody>
           </table>
+          </div>
         </div>
 
         <!-- Distribution -->
@@ -859,9 +888,10 @@ onUnmounted(() => { stopPolling() })
 .stat-label { font-size:.72rem; color:var(--pro-muted); text-transform:uppercase; letter-spacing:.06em; font-weight:700; }
 
 .results-card { overflow:hidden; }
+.results-scroll { overflow-x:auto; -webkit-overflow-scrolling: touch; }
 .results-header { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:14px 20px; border-bottom:1px solid var(--pro-border); }
 .results-title { display:flex; align-items:center; gap:8px; font-size:.9rem; font-weight:800; color:var(--pro-ink); margin:0; }
-.results-table { width:100%; border-collapse:collapse; }
+.results-table { width:100%; border-collapse:collapse; min-width:560px; }
 .results-table th { padding:9px 16px; font-size:.7rem; font-weight:800; color:var(--pro-muted); text-transform:uppercase; letter-spacing:.06em; background:#f8fafc; border-bottom:1px solid var(--pro-border); text-align:left; }
 .results-table td { padding:10px 16px; border-bottom:1px solid var(--pro-border); font-size:.84rem; vertical-align:middle; }
 .results-table tr:last-child td { border-bottom:none; }
@@ -879,4 +909,6 @@ onUnmounted(() => { stopPolling() })
 .dist-bar { width:100%; border-radius:5px 5px 0 0; min-height:4px; display:flex; align-items:flex-start; justify-content:center; transition:height .4s ease; }
 .dist-count { font-size:.7rem; font-weight:900; color:white; padding-top:4px; }
 .dist-label { font-size:.65rem; font-weight:700; color:var(--pro-muted); white-space:nowrap; }
+/* Lisibilité mobile : plancher 12px (racine 15px) */
+@media(max-width:640px){ .results-table th,.student-av{font-size:.8rem} }
 </style>

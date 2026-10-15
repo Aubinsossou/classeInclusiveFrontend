@@ -100,4 +100,5 @@ function retry() { page.value = 1; init() }
 .pd-link{color:#2563eb;font-weight:700;font-size:.8rem;text-decoration:none;white-space:nowrap}
 .pd-link:hover{text-decoration:underline}
 @media(max-width:640px){.pro-table th:nth-child(n+4),.pro-table td:nth-child(n+4){display:none}}
+@media(max-width:640px){.td-muted{font-size:.8rem}}
 </style>
