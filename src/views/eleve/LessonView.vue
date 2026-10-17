@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { apiGet, apiPost } from '@/helpers/axiosApi'
+import { getMediaUrl } from '@/helpers/mediaUrl'
 import { useVoiceEngine } from '@/composables/useVoiceEngine'
 import AppTopbar from '@/components/eleve/AppTopbar.vue'
 import { useFormValidation } from '@/composables/useFormValidation'
@@ -48,25 +49,16 @@ const apiCours = computed(() =>
 const pageTitle = computed(() => apiCours.value?.title || apiCours.value?.titre || 'Leçon')
 const courseMedias = computed(() => apiCours.value?.medias || [])
 
-// ── URL helpers — définis AVANT les computed qui les utilisent ──
-const BASE_URL = import.meta.env.VITE_API_URL?.replace('/api/v1', '') || 'http://localhost:8000'
-
-const fullUrl = (url) => {
-  if (!url) return ''
-  if (url.startsWith('http')) return url
-  return BASE_URL + url
-}
-
-// ── Médias ────────────────────────────────────────────────
+// ── Médias : URL absolue centralisée (voir helpers/mediaUrl.js) ──
 const videoUrl = computed(() => {
   const media = courseMedias.value.find((m) => m.type === 'video')
-  return media ? fullUrl(media.url) : ''
+  return media ? getMediaUrl(media.url) : ''
 })
 const audioUrl = computed(() =>
-  fullUrl(courseMedias.value.find((m) => m.type === 'audio')?.url || ''),
+  getMediaUrl(courseMedias.value.find((m) => m.type === 'audio')?.url || ''),
 )
 const lessonImages = computed(() =>
-  courseMedias.value.filter((m) => m.type === 'image').map((m) => ({ ...m, url: fullUrl(m.url) })),
+  courseMedias.value.filter((m) => m.type === 'image').map((m) => ({ ...m, url: getMediaUrl(m.url) })),
 )
 
 const hasVideo = computed(() => !!videoUrl.value)

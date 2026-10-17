@@ -2,6 +2,7 @@
 import { ref, computed, h, onMounted, reactive } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { apiGet, apiPost, apiDelete } from '@/helpers/axiosApi'
+import { getMediaUrl, mediaFileName } from '@/helpers/mediaUrl'
 import { Editor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
 import TextAlign from '@tiptap/extension-text-align'
@@ -11,6 +12,19 @@ import LoadingView from '@/components/admin/Loading.vue'
 import { useFormToast } from '@/composables/useFormToast'
 
 const { show: showToast } = useFormToast()
+
+// ── Helpers médias : URL absolue + fallback d'affichage ──
+const mediaUrlOf = (m) => getMediaUrl(m?.url)
+const mediaNameOf = (m) => mediaFileName(m?.url) || m?.name || 'Fichier'
+
+/** État « média introuvable » pour <img>/<video> en cas d'erreur de chargement. */
+function onMediaError(e) {
+  const el = e.target
+  if (!el) return
+  el.style.display = 'none'
+  const fallback = el.parentElement?.querySelector('.media-fallback')
+  if (fallback) fallback.style.display = 'flex'
+}
 
 const svgPaths = {
   plus: '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
@@ -548,20 +562,31 @@ function mediaBg(type) {
                 :style="{ '--mc': mediaColor(m.type), '--mb': mediaBg(m.type) }"
               >
                 <div class="media-preview">
-                  <video v-if="m.type === 'video'" :src="m.url" class="media-preview-el" muted />
+                  <video
+                    v-if="m.type === 'video'"
+                    :src="mediaUrlOf(m)"
+                    class="media-preview-el"
+                    muted
+                    @error="onMediaError"
+                  />
                   <img
                     v-else-if="m.type === 'image'"
-                    :src="m.url"
-                    :alt="m.type"
+                    :src="mediaUrlOf(m)"
+                    :alt="mediaNameOf(m)"
                     class="media-preview-el"
+                    @error="onMediaError"
                   />
                   <div v-else class="media-preview-audio"><AppIcon name="audio" :size="22" /></div>
+                  <div class="media-fallback" style="display: none" aria-hidden="true">
+                    <AppIcon :name="mediaIcon(m.type)" :size="20" />
+                    <span>Indisponible</span>
+                  </div>
                 </div>
                 <div class="media-info">
                   <span class="media-type-badge"
                     ><AppIcon :name="mediaIcon(m.type)" :size="11" /> {{ m.type }}</span
                   >
-                  <span class="media-url">{{ m.url.split('/').pop() }}</span>
+                  <span class="media-url">{{ mediaNameOf(m) }}</span>
                 </div>
                 <button
                   class="media-del-btn"
@@ -1358,6 +1383,24 @@ function mediaBg(type) {
   justify-content: center;
   background: var(--mb, #fef3c7);
   color: var(--mc, #f59e0b);
+}
+.media-fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  background: var(--mb, #f1f5f9);
+  color: var(--mc, #94a3b8);
+  font-size: 0.55rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.media-preview {
+  position: relative;
 }
 .media-info {
   flex: 1;

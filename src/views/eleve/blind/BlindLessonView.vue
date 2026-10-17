@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { apiGet, apiPost } from '@/helpers/axiosApi'
+import { getMediaUrl } from '@/helpers/mediaUrl'
 import { useVoiceEngine } from '@/composables/useVoiceEngine'
 import BlindTopbar from '@/components/eleve/BlindTopbar.vue'
 
@@ -42,18 +43,11 @@ function toggleSupervisor() {
   if (!supervisorMode.value) setTimeout(startLesson, 400)
 }
 
-const BASE_URL = import.meta.env.VITE_API_URL?.replace('/api/v1', '') || 'http://localhost:8000'
-function fullUrl(url) {
-  if (!url) return ''
-  if (url.startsWith('http')) return url
-  return BASE_URL + url
-}
-
 const apiCours    = computed(() =>
   (eleve.value?.classe?.enseignant?.cours ?? []).find(c => String(c.id) === lessonId)
 )
 const lessonTitle = computed(() => apiCours.value?.title || apiCours.value?.titre || 'Cours')
-const audioUrl    = computed(() => fullUrl((apiCours.value?.medias || []).find(m => m.type === 'audio')?.url || ''))
+const audioUrl    = computed(() => getMediaUrl((apiCours.value?.medias || []).find(m => m.type === 'audio')?.url || ''))
 const hasAudio    = computed(() => !!audioUrl.value)
 
 function htmlToVocalBlocks(html) {

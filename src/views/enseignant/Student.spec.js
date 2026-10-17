@@ -142,6 +142,8 @@ describe('Student.vue (espace enseignant)', () => {
     for (const [id, value, event] of [
       ['st-nom', 'Durand', 'input'],
       ['st-prenom', 'Alice', 'input'],
+      ['st-dob', '2016-01-05', 'input'],
+      ['st-parent', '0711223344', 'input'],
       ['st-code', '123456', 'input'],
     ]) {
       $id(id).value = value
@@ -173,6 +175,34 @@ describe('Student.vue (espace enseignant)', () => {
     expect(apiDelete).toHaveBeenCalledWith('enseignant/classe/eleve/destroy/11')
     await flushPromises()
     expect(wrapper.text()).toContain('Élève supprimé')
+  })
+
+  it('ouvre le modal en édition, pré-remplit les champs et appelle la route update', async () => {
+    apiPost.mockResolvedValue({
+      data: { status: 'Success', message: 'Élève modifié avec succès', data: { id: 11 } },
+    })
+    const wrapper = mountPage()
+    await flushPromises()
+
+    await wrapper.find('button.pro-icon-btn-primary').trigger('click')
+    await flushPromises()
+
+    expect($id('add-eleve-title').textContent).toContain("Modifier l'élève")
+    expect($id('st-nom').value).toBe('Martin')
+    expect($id('st-prenom').value).toBe('Lucas')
+
+    $id('st-prenom').value = 'Lucas-Modifie'
+    $id('st-prenom').dispatchEvent(new Event('input'))
+    await flushPromises()
+
+    await clickEl($sel('.h-modal-foot button.h-btn-primary'))
+
+    expect(apiPost).toHaveBeenCalledWith(
+      'enseignant/classe/eleve/update/11',
+      expect.objectContaining({ prenom: 'Lucas-Modifie' }),
+    )
+    await flushPromises()
+    expect(wrapper.text()).toContain('Élève modifié avec succès')
   })
 
   it("désactive l'ajout si l'enseignant n'a pas de classe", async () => {

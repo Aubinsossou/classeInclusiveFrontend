@@ -2,6 +2,7 @@
 import { ref, computed, h, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { apiGet, apiPost, apiDelete } from '@/helpers/axiosApi'
+import { getMediaUrl } from '@/helpers/mediaUrl'
 import LoadingView from '@/components/admin/Loading.vue'
 
 const svgPaths = {
@@ -170,18 +171,10 @@ const goEdit = (c) => router.push({ name: 'enseignantcoursformedit', params: { i
 const getMatiereName = (matiere_id) =>
   mySubjects.value.find((m) => m.id === matiere_id)?.name ?? '—'
 
-const BASE_URL = import.meta.env.VITE_API_URL?.replace('/api/v1', '') || 'http://localhost:8000'
-
-const fullUrl = (url) => {
-  if (!url) return ''
-  if (url.startsWith('http')) return url
-  return BASE_URL + url
-}
-
 const getThumbnail = (c) => {
   if (!c.medias?.length) return null
   const img = c.medias.find((m) => m.type === 'image')
-  return img ? fullUrl(img.url) : null
+  return img ? getMediaUrl(img.url) : null
 }
 
 const hasVideo = (c) => c.medias?.some((m) => m.type === 'video') ?? false
