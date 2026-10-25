@@ -232,16 +232,17 @@ onMounted(async () => {
       form.title = data.title ?? ''
       form.description = data.description ?? ''
       form.resume = data.resume ?? ''
-      form.matiere_id = data.matiere_id ?? null
-      form.classe_id = data.classe_id ?? userAuth.value?.classe?.id ?? null
+      form.matiere_id = data.matiere_id != null ? Number(data.matiere_id) : null
+      form.classe_id = data.classe_id != null ? Number(data.classe_id) : (userAuth.value?.classe?.id != null ? Number(userAuth.value.classe.id) : null)
       form.is_published = !!data.is_published
       form.date_programmation = data.date_programmation
         ? data.date_programmation.substring(0, 16).replace(' ', 'T')
         : todayDatetimeLocal()
       existingMedias.value = data.medias ?? []
       // FIX: utilise initDynamicList qui gère maintenant les objets {name}
-      materielItems.value = initDynamicList(data.materiel ?? [])
-      strategieItems.value = initDynamicList(data.strategie ?? [])
+      // Le backend peut renvoyer 'materiels'/'strategies' (pluriel, Laravel) ou 'materiel'/'strategie' (singulier)
+      materielItems.value = initDynamicList(data.materiels ?? data.materiel ?? [])
+      strategieItems.value = initDynamicList(data.strategies ?? data.strategie ?? [])
       initEditor(data.contenu ?? '')
     } else {
       initEditor('')
@@ -889,6 +890,116 @@ function mediaBg(type) {
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+/* ── RESPONSIVE MOBILE ── */
+@media (max-width: 860px) {
+  .cfv-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cfv-aside {
+    display: block;
+    padding-top: 16px;
+  }
+
+  .cfv-card {
+    padding: 16px;
+  }
+
+  .cfv-card-programmation {
+    padding: 16px;
+  }
+
+  .field-label {
+    font-size: 0.7rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .cfv-header {
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 12px 0;
+  }
+
+  .cfv-header-center {
+    order: 3;
+    width: 100%;
+    text-align: center;
+    flex: 1 1 100%;
+  }
+
+  .cfv-header-actions {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .cfv-card {
+    border: 1.5px solid var(--pro-border);
+    border-radius: var(--pro-r-md);
+  }
+
+  .dynlist-row {
+    flex-wrap: nowrap;
+  }
+
+  .dynlist-input {
+    flex: 1 1 auto;
+    min-width: 80px;
+  }
+
+  .dynlist-del {
+    flex-shrink: 0;
+    padding: 6px 10px;
+  }
+
+  .media-item {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .media-preview {
+    width: 80px;
+    height: 60px;
+    flex-shrink: 0;
+  }
+
+  .media-info {
+    min-width: 0;
+  }
+
+  .media-type-badge {
+    font-size: 0.6rem;
+    padding: 2px 6px;
+  }
+
+  .media-url {
+    font-size: 0.7rem;
+  }
+
+  .media-size {
+    font-size: 0.6rem;
+  }
+
+  .classe-display {
+    padding: 8px 10px;
+  }
+
+  .toggle-btn {
+    width: 44px;
+    height: 24px;
+  }
+
+  .toggle-knob {
+    width: 18px;
+    height: 18px;
+  }
+
+  .prog-reset-btn {
+    padding: 4px 10px;
+    font-size: 0.65rem;
+  }
+}
 
 .cfv-root {
   --pro-green: #10b981;

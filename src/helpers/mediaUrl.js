@@ -34,6 +34,11 @@ export function getMediaUrl(path) {
   if (/^https?:\/\//i.test(p)) return p
   // Chemin raciné → préfixe avec la base
   if (p.startsWith('/')) return BASE_URL + p
+  // Chemin raciné contenant 'storage' → origin du navigateur (fichiers stockés dans /storage/...)
+  if (p.startsWith('/') && p.includes('storage')) {
+    const origin = window.location.origin || 'http://localhost:8000'
+    return origin.replace(/\$/, '') + p
+  }
   // Chemin relatif → préfixe avec la base + '/'
   return BASE_URL + '/' + p
 }
