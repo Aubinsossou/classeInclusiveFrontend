@@ -1,9 +1,10 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { apiGet, apiDelete } from '@/helpers/axiosApi'
+import { ref, reactive, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
+import { apiGet, apiPost, apiDelete } from '@/helpers/axiosApi'
 import LoadingView from '@/components/admin/Loading.vue'
 import codeToggle from '@/components/admin/codeToggle.vue'
-import AddEleveForm from '@/components/enseignant/AddEleveForm.vue'
+import ResponsiveTable from '@/components/ResponsiveTable.vue'
+import { useFormValidation } from '@/composables/useFormValidation'
 
 const getEnseignantAuth = ref(null)
 const handicaps = ref([])
@@ -73,17 +74,184 @@ function showToast(msg, type = 'success') {
   toastTimer = setTimeout(() => (toastVisible.value = false), 3500)
 }
 
-// ── Modale d'ajout : seul l'état d'ouverture vit ici.
-// Tout le formulaire / validation / soumission est dans AddEleveForm.vue. ──
+// ── Modale d'ajout / édition (inline école : comportement école) ──────────────
+// Même interaction que adminEnseignant.vue : overlay v-if, fermeture Échap /
+// clic extérieur, focus sur le 1er champ, piège de focus Tab, labels,
+// état de chargement, erreurs inline, toast de succès + rafraîchissement. ────
 const showForm = ref(false)
+const editTarget = ref(null)
+const isEdit = computed(() => !!editTarget.value)
+
+const formEl = ref(null)
+const modalEl = ref(null)
+const firstField = ref(null)
+const submitting = ref(false)
+const formError = ref('')
+const fieldErrors = ref({})
+let previousFocus = null
+
+const { validate, attach } = useFormValidation()
+
+const emptyForm = () => ({
+  name: '',
+  prenom: '',
+  dateOfNaissance: '',
+  numeroParent: '',
+  handicap_id: '',
+  code: '',
+})
+const form = reactive(emptyForm())
+
+function firstError(field) {
+  const value = fieldErrors.value[field]
+  if (Array.isArray(value)) return value[0]
+  return value || ''
+}
+
+function resetForm() {
+  Object.assign(form, emptyForm())
+  formError.value = ''
+  fieldErrors.value = {}
+  // En mode édition, pré-remplir avec les données existantes.
+  if (isEdit.value && editTarget.value) {
+    form.name = editTarget.value.name ?? ''
+    form.prenom = editTarget.value.prenom ?? ''
+    form.dateOfNaissance = editTarget.value.dateOfNaissance ?? ''
+    form.numeroParent = editTarget.value.numeroParent ?? ''
+    form.handicap_id = editTarget.value.handicap_id ?? editTarget.value.handicap?.id ?? ''
+    form.code = editTarget.value.code != null ? String(editTarget.value.code) : ''
+  }
+}
+
+// ── Piège de focus (accessibilité) : Tab / Shift+Tab restent dans la modale.
+const FOCUSABLE_SELECTOR =
+  'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+
+function trapFocus(e) {
+  const modal = modalEl.value
+  if (!modal) return
+  const focusables = Array.from(modal.querySelectorAll(FOCUSABLE_SELECTOR))
+  if (!focusables.length) return
+  const first = focusables[0]
+  const last = focusables[focusables.length - 1]
+  const active = document.activeElement
+  if (e.shiftKey) {
+    if (active === first || !modal.contains(active)) {
+      e.preventDefault()
+      last.focus()
+    }
+  } else if (active === last) {
+    e.preventDefault()
+    first.focus()
+  }
+}
+
+function onFormKeydown(e) {
+  if (e.key === 'Escape' && !submitting.value) {
+    closeForm()
+    return
+  }
+  if (e.key === 'Tab') trapFocus(e)
+}
+
+function closeForm() {
+  showForm.value = false
+  editTarget.value = null
+}
 
 function openAdd() {
+  editTarget.value = null
   showForm.value = true
 }
 
+function openEdit(eleve) {
+  editTarget.value = eleve
+  showForm.value = true
+}
+
+// À l'ouverture : reset, focus 1er champ, validation live, verrou scroll + Échap.
+// Le padding-right compense la disparition de la scrollbar (anti-décalage).
+// À la fermeture : restaure scroll, rend le focus à l'élément précédent.
+watch(showForm, (isOpen) => {
+  if (isOpen) {
+    resetForm()
+    previousFocus = document.activeElement
+    // Largeur de la scrollbar avant de la masquer (0 si overlay scroll / mobile).
+    const scrollbarW = window.innerWidth - document.documentElement.clientWidth
+    if (scrollbarW > 0) document.body.style.paddingRight = `${scrollbarW}px`
+    document.body.style.overflow = 'hidden'
+    window.addEventListener('keydown', onFormKeydown)
+    nextTick(() => {
+      attach(formEl.value)
+      firstField.value?.focus?.({ preventScroll: true })
+    })
+  } else {
+    document.body.style.overflow = ''
+    document.body.style.paddingRight = ''
+    window.removeEventListener('keydown', onFormKeydown)
+    if (previousFocus && document.contains(previousFocus)) previousFocus.focus?.()
+  }
+})
+
+onUnmounted(() => {
+  document.body.style.overflow = ''
+  document.body.style.paddingRight = ''
+  window.removeEventListener('keydown', onFormKeydown)
+})
+
+async function submitForm() {
+  formError.value = ''
+  if (!validate(formEl.value)) {
+    formError.value = 'Veuillez remplir tous les champs obligatoires.'
+    return
+  }
+  submitting.value = true
+  fieldErrors.value = {}
+  try {
+    // NOTE : aucun classe_id n'est envoyé — le serveur rattache
+    // toujours l'élève à la classe de l'enseignant connecté.
+    const payload = {
+      name: form.name.trim(),
+      prenom: form.prenom.trim(),
+      numeroParent: form.numeroParent.trim(),
+      handicap_id: form.handicap_id === '' ? '' : Number(form.handicap_id),
+      dateOfNaissance: form.dateOfNaissance,
+    }
+
+    if (isEdit.value) {
+      // En mode édition, le code est envoyé s'il est renseigné (sinon inchangé).
+      if (form.code.trim()) payload.code = form.code.trim()
+      const response = await apiPost(`enseignant/classe/eleve/update/${editTarget.value.id}`, payload)
+      await onEleveCreated({ message: response.data?.message || 'Élève modifié avec succès.' })
+    } else {
+      payload.code = form.code.trim()
+      const response = await apiPost('enseignant/classe/eleve/store', payload)
+      await onEleveCreated({ message: response.data?.message || 'Élève ajouté à votre classe.' })
+    }
+  } catch (err) {
+    const status = err?.response?.status
+    const data = err?.response?.data
+    if (status === 409) {
+      formError.value = data?.message || 'Ce code est déjà utilisé par un autre élève.'
+      fieldErrors.value = { code: [formError.value] }
+    } else if (status === 401) {
+      localStorage.removeItem('access_token')
+      localStorage.removeItem('role')
+      window.location.href = '/enseignant/login'
+    } else {
+      formError.value = data?.message || (isEdit.value ? "La modification de l'élève a échoué." : "L'ajout de l'élève a échoué.")
+      fieldErrors.value = data?.errors ?? {}
+    }
+  } finally {
+    submitting.value = false
+  }
+}
+
 async function onEleveCreated({ message }) {
+  const wasEdit = !!editTarget.value
   showForm.value = false
-  showToast(message || 'Élève ajouté à votre classe.', 'success')
+  editTarget.value = null
+  showToast(message || (wasEdit ? 'Élève modifié avec succès.' : 'Élève ajouté à votre classe.'), 'success')
   await apiGetEnseignantConnect()
 }
 
@@ -198,7 +366,7 @@ function handicapBadge(name) {
     </div>
 
     <!-- TABLEAU -->
-    <div class="pro-table-wrap">
+    <ResponsiveTable mode="scroll" :min-width="760">
       <table class="pro-table" aria-label="Liste des élèves">
         <thead>
           <tr>
@@ -350,6 +518,28 @@ function handicapBadge(name) {
             <td>
               <div class="pro-actions">
                 <button
+                  class="pro-icon-btn pro-icon-btn-primary"
+                  type="button"
+                  title="Modifier l'élève"
+                  :aria-label="`Modifier ${eleve.prenom ?? ''} ${eleve.name ?? ''}`.trim()"
+                  :disabled="!canManage"
+                  @click="openEdit(eleve)"
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                  </svg>
+                </button>
+                <button
                   class="pro-icon-btn pro-icon-btn-danger"
                   type="button"
                   title="Supprimer l'élève"
@@ -389,7 +579,7 @@ function handicapBadge(name) {
           </tr>
         </tbody>
       </table>
-    </div>
+    </ResponsiveTable>
 
     <!-- Empty state global -->
     <div v-if="eleves.length === 0 && !loading" class="pro-empty pro-card" style="padding: 48px">
@@ -410,13 +600,21 @@ function handicapBadge(name) {
       <p>Aucun élève dans votre classe pour le moment.</p>
     </div>
 
-    <!-- ══ MODALE AJOUT D'UN ÉLÈVE ══ -->
+    <!-- ══ MODALE AJOUT / MODIFICATION D'UN ÉLÈVE (inline comportement école) ══ -->
     <Teleport v-if="showForm" to="body">
-      <div class="h-overlay" @click.self="showForm = false">
-        <div class="h-modal h-modal-lg">
+      <div class="h-overlay" @click.self="closeForm">
+        <div
+          ref="modalEl"
+          class="h-modal h-modal-lg"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="add-eleve-title"
+        >
           <div class="h-modal-head">
-            <h2 class="h-modal-title">Ajouter un élève à ma classe</h2>
-            <button class="h-close-btn" type="button" aria-label="Fermer" @click="showForm = false">
+            <h2 id="add-eleve-title" class="h-modal-title">
+              {{ isEdit ? 'Modifier l\'élève' : 'Ajouter un élève à ma classe' }}
+            </h2>
+            <button class="h-close-btn" type="button" aria-label="Fermer" @click="closeForm">
               <svg
                 width="16"
                 height="16"
@@ -440,64 +638,113 @@ function handicapBadge(name) {
 
             <div v-if="formError" class="h-error" role="alert">{{ formError }}</div>
 
-            <div ref="formEl" class="h-form-grid">
+            <form class="h-form-grid" ref="formEl" novalidate @submit.prevent="submitForm">
               <div class="h-field">
                 <label class="h-lbl" for="st-nom">Nom <span class="h-req">*</span></label>
-                <input id="st-nom" v-model="form.name" class="h-inp" placeholder="Ex : DUPONT" required />
+                <input
+                  id="st-nom"
+                  ref="firstField"
+                  v-model="form.name"
+                  class="h-inp"
+                  :class="{ 'h-inp-err': firstError('name') }"
+                  placeholder="Ex : DUPONT"
+                  autocomplete="family-name"
+                  aria-describedby="st-nom-err"
+                  required
+                />
+                <span v-if="firstError('name')" id="st-nom-err" class="h-field-err">
+                  {{ firstError('name') }}
+                </span>
               </div>
 
               <div class="h-field">
                 <label class="h-lbl" for="st-prenom">Prénom <span class="h-req">*</span></label>
-                <input id="st-prenom" v-model="form.prenom" class="h-inp" placeholder="Ex : Lucas" required />
+                <input
+                  id="st-prenom"
+                  v-model="form.prenom"
+                  class="h-inp"
+                  :class="{ 'h-inp-err': firstError('prenom') }"
+                  placeholder="Ex : Lucas"
+                  autocomplete="given-name"
+                  aria-describedby="st-prenom-err"
+                  required
+                />
+                <span v-if="firstError('prenom')" id="st-prenom-err" class="h-field-err">
+                  {{ firstError('prenom') }}
+                </span>
               </div>
 
               <div class="h-field">
-                <label class="h-lbl" for="st-dob">Date de naissance</label>
-                <input id="st-dob" v-model="form.dateOfNaissance" type="date" class="h-inp" />
+                <label class="h-lbl" for="st-dob">Date de naissance <span class="h-req">*</span></label>
+                <input
+                  id="st-dob"
+                  v-model="form.dateOfNaissance"
+                  type="date"
+                  class="h-inp"
+                  autocomplete="bday"
+                  required
+                />
               </div>
 
               <div class="h-field">
-                <label class="h-lbl" for="st-parent">N° des parents</label>
+                <label class="h-lbl" for="st-parent">N° des parents <span class="h-req">*</span></label>
                 <input
                   id="st-parent"
                   v-model="form.numeroParent"
                   class="h-inp"
                   placeholder="Ex : 0195959595"
-                  type="text"
+                  type="tel"
+                  autocomplete="tel"
+                  required
                 />
               </div>
 
               <div class="h-field">
-                <label class="h-lbl" for="st-code">Code (matricule) <span class="h-req">*</span></label>
+                <label class="h-lbl" for="st-code">
+                  Code (matricule) <span v-if="!isEdit" class="h-req">*</span>
+                </label>
                 <input
                   id="st-code"
                   v-model="form.code"
                   class="h-inp"
-                  :class="{ 'h-inp-err': fieldErrors.code }"
+                  :class="{ 'h-inp-err': firstError('code') }"
                   placeholder="Ex : 123456"
                   type="text"
-                  required
+                  inputmode="numeric"
+                  :required="!isEdit"
+                  aria-describedby="st-code-err"
                 />
-                <span v-if="firstError('code')" class="h-field-err">{{ firstError('code') }}</span>
+                <span v-if="firstError('code')" id="st-code-err" class="h-field-err">
+                  {{ firstError('code') }}
+                </span>
               </div>
 
               <div class="h-field">
                 <label class="h-lbl" for="st-handicap">
                   Profil d'accessibilité <span class="h-req">*</span>
                 </label>
-                <select id="st-handicap" v-model="form.handicap_id" class="h-inp" required>
+                <select
+                  id="st-handicap"
+                  v-model="form.handicap_id"
+                  class="h-inp"
+                  :class="{ 'h-inp-err': firstError('handicap_id') }"
+                  aria-describedby="st-handicap-err"
+                  required
+                >
                   <option value="">— Choisir —</option>
-                  <option v-for="h in handicaps" :key="h.id" :value="h.id">{{ h.name }}</option>
+                  <option v-for="h in handicaps" :key="h.id" :value="h.id">
+                    {{ h.name }}
+                  </option>
                 </select>
-                <span v-if="firstError('handicap_id')" class="h-field-err">
+                <span v-if="firstError('handicap_id')" id="st-handicap-err" class="h-field-err">
                   {{ firstError('handicap_id') }}
                 </span>
               </div>
-            </div>
+            </form>
           </div>
 
           <div class="h-modal-foot">
-            <button class="h-btn h-btn-ghost" type="button" @click="showForm = false">Annuler</button>
+            <button class="h-btn h-btn-ghost" type="button" @click="closeForm">Annuler</button>
             <button
               class="h-btn h-btn-primary"
               type="button"
@@ -517,7 +764,7 @@ function handicapBadge(name) {
               >
                 <polyline points="20 6 9 17 4 12" />
               </svg>
-              {{ submitting ? 'Ajout…' : 'Inscrire' }}
+              {{ submitting ? (isEdit ? 'Enregistrement…' : 'Ajout…') : (isEdit ? 'Enregistrer' : 'Inscrire') }}
             </button>
           </div>
         </div>
@@ -931,13 +1178,18 @@ function handicapBadge(name) {
   color: #dc2626;
   background: rgba(220, 38, 38, 0.06);
 }
+.pro-icon-btn-primary:hover {
+  border-color: var(--pro-blue);
+  color: var(--pro-blue);
+  background: var(--pro-blue-soft);
+}
 .pro-icon-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
 
-/* ══ Modales (Teleport vers body → styles globaux nécessaires) ══ */
-:deep(.h-overlay) {
+/* ══ Modales (contenu Teleport : scorées au composant, appliquées aux éléments téléportés) ══ */
+.h-overlay {
   position: fixed;
   inset: 0;
   background: rgba(15, 23, 42, 0.45);
@@ -948,7 +1200,7 @@ function handicapBadge(name) {
   z-index: 9999;
   padding: 16px;
 }
-:deep(.h-modal) {
+.h-modal {
   background: #fff;
   border-radius: 16px;
   width: 100%;
@@ -958,23 +1210,23 @@ function handicapBadge(name) {
   flex-direction: column;
   max-height: 90vh;
 }
-:deep(.h-modal-lg) {
+.h-modal-lg {
   max-width: 640px;
 }
-:deep(.h-modal-head) {
+.h-modal-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 20px 24px 16px;
   border-bottom: 1px solid #e2e8f0;
 }
-:deep(.h-modal-title) {
+.h-modal-title {
   font-size: 1.05rem;
   font-weight: 800;
   color: #0f172a;
   margin: 0;
 }
-:deep(.h-close-btn) {
+.h-close-btn {
   width: 30px;
   height: 30px;
   border-radius: 8px;
@@ -987,45 +1239,45 @@ function handicapBadge(name) {
   color: #94a3b8;
   transition: all 0.13s;
 }
-:deep(.h-close-btn:hover) {
+.h-close-btn:hover {
   border-color: #dc2626;
   color: #dc2626;
 }
-:deep(.h-modal-body) {
+.h-modal-body {
   padding: 20px 24px;
   overflow-y: auto;
 }
-:deep(.h-modal-foot) {
+.h-modal-foot {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
   padding: 16px 24px 20px;
   border-top: 1px solid #e2e8f0;
 }
-:deep(.h-modal-sub) {
+.h-modal-sub {
   font-size: 0.82rem;
   color: #64748b;
   margin: 0 0 14px;
 }
-:deep(.h-form-grid) {
+.h-form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 14px;
 }
-:deep(.h-field) {
+.h-field {
   display: flex;
   flex-direction: column;
   gap: 5px;
 }
-:deep(.h-lbl) {
+.h-lbl {
   font-size: 0.78rem;
   font-weight: 700;
   color: #475569;
 }
-:deep(.h-req) {
+.h-req {
   color: #dc2626;
 }
-:deep(.h-inp) {
+.h-inp {
   padding: 9px 12px;
   border: 1.5px solid #e2e8f0;
   border-radius: 8px;
@@ -1038,19 +1290,19 @@ function handicapBadge(name) {
   width: 100%;
   box-sizing: border-box;
 }
-:deep(.h-inp:focus) {
+.h-inp:focus {
   border-color: #2563eb;
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
-:deep(.h-inp-err) {
+.h-inp-err {
   border-color: #dc2626 !important;
 }
-:deep(.h-field-err) {
+.h-field-err {
   font-size: 0.74rem;
   font-weight: 600;
   color: #dc2626;
 }
-:deep(.h-btn) {
+.h-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -1063,43 +1315,43 @@ function handicapBadge(name) {
   border: 1.5px solid transparent;
   transition: all 0.15s;
 }
-:deep(.h-btn:disabled) {
+.h-btn:disabled {
   opacity: 0.45;
   cursor: not-allowed;
 }
-:deep(.h-btn-primary) {
+.h-btn-primary {
   background: #2563eb;
   color: #fff;
   border-color: #2563eb;
 }
-:deep(.h-btn-primary:hover:not(:disabled)) {
+.h-btn-primary:hover:not(:disabled) {
   background: #1d4ed8;
 }
-:deep(.h-btn-ghost) {
+.h-btn-ghost {
   background: transparent;
   border-color: #e2e8f0;
   color: #475569;
 }
-:deep(.h-btn-ghost:hover) {
+.h-btn-ghost:hover {
   border-color: #94a3b8;
 }
-:deep(.h-btn-danger) {
+.h-btn-danger {
   background: #dc2626;
   color: #fff;
   border-color: #dc2626;
 }
-:deep(.h-btn-danger:hover) {
+.h-btn-danger:hover {
   background: #b91c1c;
 }
-:deep(.h-del-icon) {
+.h-del-icon {
   margin-bottom: 14px;
 }
-:deep(.h-del-text) {
+.h-del-text {
   color: #64748b;
   margin: 0;
   line-height: 1.6;
 }
-:deep(.h-error) {
+.h-error {
   background: #fef2f2;
   border: 1px solid #fecaca;
   color: #991b1b;
@@ -1110,13 +1362,13 @@ function handicapBadge(name) {
   margin-bottom: 14px;
 }
 @media (max-width: 520px) {
-  :deep(.h-form-grid) {
+  .h-form-grid {
     grid-template-columns: 1fr;
   }
 }
 
 /* ══ Toast ══ */
-:deep(.h-toast) {
+.h-toast {
   position: fixed;
   bottom: 24px;
   left: 50%;
@@ -1131,10 +1383,10 @@ function handicapBadge(name) {
   box-shadow: 0 10px 30px rgba(15, 23, 42, 0.25);
   max-width: calc(100vw - 32px);
 }
-:deep(.h-toast-success) {
+.h-toast-success {
   background: #059669;
 }
-:deep(.h-toast-error) {
+.h-toast-error {
   background: #dc2626;
 }
 .toast-slide-enter-active,

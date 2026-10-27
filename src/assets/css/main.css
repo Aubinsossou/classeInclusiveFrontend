@@ -432,7 +432,7 @@ h1,h2,h3,h4 { font-family: var(--font-h); }
 .pro-panel-link-green:hover { background: rgba(5,150,105,0.16); }
 
 /* Table Pro */
-.pro-table-wrap { background: var(--pro-card); border-radius: var(--pro-r-lg); border: 1px solid var(--pro-border); box-shadow: var(--pro-shadow-md); overflow: hidden; }
+.pro-table-wrap { background: var(--pro-card); border-radius: var(--pro-r-lg); border: 1px solid var(--pro-border); box-shadow: var(--pro-shadow-md); overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .pro-table { width: 100%; border-collapse: collapse; }
 .pro-table th {
   padding: 11px 16px; text-align: left;

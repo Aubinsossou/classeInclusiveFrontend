@@ -2,6 +2,7 @@
 import { ref, computed, h, onMounted, reactive } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { apiGet, apiPost, apiDelete } from '@/helpers/axiosApi'
+import { getMediaUrl, mediaFileName } from '@/helpers/mediaUrl'
 import { Editor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
 import TextAlign from '@tiptap/extension-text-align'
@@ -11,6 +12,19 @@ import LoadingView from '@/components/admin/Loading.vue'
 import { useFormToast } from '@/composables/useFormToast'
 
 const { show: showToast } = useFormToast()
+
+// ── Helpers médias : URL absolue + fallback d'affichage ──
+const mediaUrlOf = (m) => getMediaUrl(m?.url)
+const mediaNameOf = (m) => mediaFileName(m?.url) || m?.name || 'Fichier'
+
+/** État « média introuvable » pour <img>/<video> en cas d'erreur de chargement. */
+function onMediaError(e) {
+  const el = e.target
+  if (!el) return
+  el.style.display = 'none'
+  const fallback = el.parentElement?.querySelector('.media-fallback')
+  if (fallback) fallback.style.display = 'flex'
+}
 
 const svgPaths = {
   plus: '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
@@ -218,16 +232,17 @@ onMounted(async () => {
       form.title = data.title ?? ''
       form.description = data.description ?? ''
       form.resume = data.resume ?? ''
-      form.matiere_id = data.matiere_id ?? null
-      form.classe_id = data.classe_id ?? userAuth.value?.classe?.id ?? null
+      form.matiere_id = data.matiere_id != null ? Number(data.matiere_id) : null
+      form.classe_id = data.classe_id != null ? Number(data.classe_id) : (userAuth.value?.classe?.id != null ? Number(userAuth.value.classe.id) : null)
       form.is_published = !!data.is_published
       form.date_programmation = data.date_programmation
         ? data.date_programmation.substring(0, 16).replace(' ', 'T')
         : todayDatetimeLocal()
       existingMedias.value = data.medias ?? []
       // FIX: utilise initDynamicList qui gère maintenant les objets {name}
-      materielItems.value = initDynamicList(data.materiel ?? [])
-      strategieItems.value = initDynamicList(data.strategie ?? [])
+      // Le backend peut renvoyer 'materiels'/'strategies' (pluriel, Laravel) ou 'materiel'/'strategie' (singulier)
+      materielItems.value = initDynamicList(data.materiels ?? data.materiel ?? [])
+      strategieItems.value = initDynamicList(data.strategies ?? data.strategie ?? [])
       initEditor(data.contenu ?? '')
     } else {
       initEditor('')
@@ -548,20 +563,31 @@ function mediaBg(type) {
                 :style="{ '--mc': mediaColor(m.type), '--mb': mediaBg(m.type) }"
               >
                 <div class="media-preview">
-                  <video v-if="m.type === 'video'" :src="m.url" class="media-preview-el" muted />
+                  <video
+                    v-if="m.type === 'video'"
+                    :src="mediaUrlOf(m)"
+                    class="media-preview-el"
+                    muted
+                    @error="onMediaError"
+                  />
                   <img
                     v-else-if="m.type === 'image'"
-                    :src="m.url"
-                    :alt="m.type"
+                    :src="mediaUrlOf(m)"
+                    :alt="mediaNameOf(m)"
                     class="media-preview-el"
+                    @error="onMediaError"
                   />
                   <div v-else class="media-preview-audio"><AppIcon name="audio" :size="22" /></div>
+                  <div class="media-fallback" style="display: none" aria-hidden="true">
+                    <AppIcon :name="mediaIcon(m.type)" :size="20" />
+                    <span>Indisponible</span>
+                  </div>
                 </div>
                 <div class="media-info">
                   <span class="media-type-badge"
                     ><AppIcon :name="mediaIcon(m.type)" :size="11" /> {{ m.type }}</span
                   >
-                  <span class="media-url">{{ m.url.split('/').pop() }}</span>
+                  <span class="media-url">{{ mediaNameOf(m) }}</span>
                 </div>
                 <button
                   class="media-del-btn"
@@ -864,6 +890,116 @@ function mediaBg(type) {
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+/* ── RESPONSIVE MOBILE ── */
+@media (max-width: 860px) {
+  .cfv-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cfv-aside {
+    display: block;
+    padding-top: 16px;
+  }
+
+  .cfv-card {
+    padding: 16px;
+  }
+
+  .cfv-card-programmation {
+    padding: 16px;
+  }
+
+  .field-label {
+    font-size: 0.7rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .cfv-header {
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 12px 0;
+  }
+
+  .cfv-header-center {
+    order: 3;
+    width: 100%;
+    text-align: center;
+    flex: 1 1 100%;
+  }
+
+  .cfv-header-actions {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .cfv-card {
+    border: 1.5px solid var(--pro-border);
+    border-radius: var(--pro-r-md);
+  }
+
+  .dynlist-row {
+    flex-wrap: nowrap;
+  }
+
+  .dynlist-input {
+    flex: 1 1 auto;
+    min-width: 80px;
+  }
+
+  .dynlist-del {
+    flex-shrink: 0;
+    padding: 6px 10px;
+  }
+
+  .media-item {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .media-preview {
+    width: 80px;
+    height: 60px;
+    flex-shrink: 0;
+  }
+
+  .media-info {
+    min-width: 0;
+  }
+
+  .media-type-badge {
+    font-size: 0.6rem;
+    padding: 2px 6px;
+  }
+
+  .media-url {
+    font-size: 0.7rem;
+  }
+
+  .media-size {
+    font-size: 0.6rem;
+  }
+
+  .classe-display {
+    padding: 8px 10px;
+  }
+
+  .toggle-btn {
+    width: 44px;
+    height: 24px;
+  }
+
+  .toggle-knob {
+    width: 18px;
+    height: 18px;
+  }
+
+  .prog-reset-btn {
+    padding: 4px 10px;
+    font-size: 0.65rem;
+  }
+}
 
 .cfv-root {
   --pro-green: #10b981;
@@ -1358,6 +1494,24 @@ function mediaBg(type) {
   justify-content: center;
   background: var(--mb, #fef3c7);
   color: var(--mc, #f59e0b);
+}
+.media-fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  background: var(--mb, #f1f5f9);
+  color: var(--mc, #94a3b8);
+  font-size: 0.55rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.media-preview {
+  position: relative;
 }
 .media-info {
   flex: 1;

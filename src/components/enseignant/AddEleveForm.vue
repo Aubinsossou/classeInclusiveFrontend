@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, watch, nextTick, onUnmounted } from 'vue'
+import { ref, reactive, computed, watch, nextTick, onUnmounted } from 'vue'
 import { apiPost } from '@/helpers/axiosApi'
 import { useFormValidation } from '@/composables/useFormValidation'
 
@@ -10,6 +10,8 @@ const props = defineProps({
   classeName: { type: String, default: '' },
   /** Options du select « Profil d'accessibilité » : [{ id, name }]. */
   handicapOptions: { type: Array, default: () => [] },
+  /** Élève à modifier : null = mode ajout, objet = mode édition. */
+  eleve: { type: Object, default: null },
 })
 
 const emit = defineEmits(['close', 'created'])
@@ -32,10 +34,22 @@ const emptyForm = () => ({
 })
 const form = reactive(emptyForm())
 
+/** Mode édition (true) ou ajout (false). */
+const isEdit = computed(() => !!props.eleve)
+
 function resetForm() {
   Object.assign(form, emptyForm())
   formError.value = ''
   fieldErrors.value = {}
+  // En mode édition, pré-remplir avec les données existantes.
+  if (isEdit.value && props.eleve) {
+    form.name = props.eleve.name ?? ''
+    form.prenom = props.eleve.prenom ?? ''
+    form.dateOfNaissance = props.eleve.dateOfNaissance ?? ''
+    form.numeroParent = props.eleve.numeroParent ?? ''
+    form.handicap_id = props.eleve.handicap_id ?? props.eleve.handicap?.id ?? ''
+    form.code = props.eleve.code != null ? String(props.eleve.code) : ''
+  }
 }
 
 function firstError(field) {
@@ -45,9 +59,40 @@ function firstError(field) {
 }
 
 let previousFocus = null
+const modalEl = ref(null)
+
+/**
+ * Piège de focus (accessibilité) : tant que la modale est ouverte,
+ * Tab / Shift+Tab restent dans la modale (bouclent sur ses éléments focusables).
+ */
+const FOCUSABLE_SELECTOR =
+  'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+
+function trapFocus(e) {
+  const modal = modalEl.value
+  if (!modal) return
+  const focusables = Array.from(modal.querySelectorAll(FOCUSABLE_SELECTOR))
+  if (!focusables.length) return
+  const first = focusables[0]
+  const last = focusables[focusables.length - 1]
+  const active = document.activeElement
+  if (e.shiftKey) {
+    if (active === first || !modal.contains(active)) {
+      e.preventDefault()
+      last.focus()
+    }
+  } else if (active === last) {
+    e.preventDefault()
+    first.focus()
+  }
+}
 
 function onKeydown(e) {
-  if (e.key === 'Escape' && !submitting.value) emit('close')
+  if (e.key === 'Escape' && !submitting.value) {
+    emit('close')
+    return
+  }
+  if (e.key === 'Tab') trapFocus(e)
 }
 
 async function submitForm() {
@@ -61,18 +106,30 @@ async function submitForm() {
   try {
     // NOTE : aucun classe_id n'est envoyé — le serveur rattache
     // toujours l'élève à la classe de l'enseignant connecté.
-    const response = await apiPost('enseignant/classe/eleve/store', {
+    const payload = {
       name: form.name.trim(),
       prenom: form.prenom.trim(),
       numeroParent: form.numeroParent.trim(),
       handicap_id: form.handicap_id === '' ? '' : Number(form.handicap_id),
       dateOfNaissance: form.dateOfNaissance,
-      code: form.code.trim(),
-    })
-    emit('created', {
-      message: response.data?.message || 'Élève ajouté à votre classe.',
-      eleve: response.data?.data ?? null,
-    })
+    }
+
+    if (isEdit.value) {
+      // En mode édition, le code est envoyé s'il est renseigné (sinon inchangé).
+      if (form.code.trim()) payload.code = form.code.trim()
+      const response = await apiPost(`enseignant/classe/eleve/update/${props.eleve.id}`, payload)
+      emit('created', {
+        message: response.data?.message || 'Élève modifié avec succès.',
+        eleve: response.data?.data ?? null,
+      })
+    } else {
+      payload.code = form.code.trim()
+      const response = await apiPost('enseignant/classe/eleve/store', payload)
+      emit('created', {
+        message: response.data?.message || 'Élève ajouté à votre classe.',
+        eleve: response.data?.data ?? null,
+      })
+    }
   } catch (err) {
     const status = err?.response?.status
     const data = err?.response?.data
@@ -84,7 +141,7 @@ async function submitForm() {
       localStorage.removeItem('role')
       window.location.href = '/enseignant/login'
     } else {
-      formError.value = data?.message || "L'ajout de l'élève a échoué."
+      formError.value = data?.message || (isEdit.value ? "La modification de l'élève a échoué." : "L'ajout de l'élève a échoué.")
       fieldErrors.value = data?.errors ?? {}
     }
   } finally {
@@ -125,13 +182,16 @@ onUnmounted(() => {
   <Teleport v-if="open" to="body">
     <div class="h-overlay" @click.self="$emit('close')">
       <div
+        ref="modalEl"
         class="h-modal h-modal-lg"
         role="dialog"
         aria-modal="true"
         aria-labelledby="add-eleve-title"
       >
         <div class="h-modal-head">
-          <h2 id="add-eleve-title" class="h-modal-title">Ajouter un élève à ma classe</h2>
+          <h2 id="add-eleve-title" class="h-modal-title">
+            {{ isEdit ? 'Modifier l\'élève' : 'Ajouter un élève à ma classe' }}
+          </h2>
           <button class="h-close-btn" type="button" aria-label="Fermer" @click="$emit('close')">
             <svg
               width="16"
@@ -193,18 +253,19 @@ onUnmounted(() => {
             </div>
 
             <div class="h-field">
-              <label class="h-lbl" for="st-dob">Date de naissance</label>
+              <label class="h-lbl" for="st-dob">Date de naissance <span class="h-req">*</span></label>
               <input
                 id="st-dob"
                 v-model="form.dateOfNaissance"
                 type="date"
                 class="h-inp"
                 autocomplete="bday"
+                required
               />
             </div>
 
             <div class="h-field">
-              <label class="h-lbl" for="st-parent">N° des parents</label>
+              <label class="h-lbl" for="st-parent">N° des parents <span class="h-req">*</span></label>
               <input
                 id="st-parent"
                 v-model="form.numeroParent"
@@ -212,11 +273,14 @@ onUnmounted(() => {
                 placeholder="Ex : 0195959595"
                 type="tel"
                 autocomplete="tel"
+                required
               />
             </div>
 
             <div class="h-field">
-              <label class="h-lbl" for="st-code">Code (matricule) <span class="h-req">*</span></label>
+              <label class="h-lbl" for="st-code">
+                Code (matricule) <span v-if="!isEdit" class="h-req">*</span>
+              </label>
               <input
                 id="st-code"
                 v-model="form.code"
@@ -225,8 +289,8 @@ onUnmounted(() => {
                 placeholder="Ex : 123456"
                 type="text"
                 inputmode="numeric"
+                :required="!isEdit"
                 aria-describedby="st-code-err"
-                required
               />
               <span v-if="firstError('code')" id="st-code-err" class="h-field-err">
                 {{ firstError('code') }}
@@ -278,7 +342,7 @@ onUnmounted(() => {
             >
               <polyline points="20 6 9 17 4 12" />
             </svg>
-            {{ submitting ? 'Ajout…' : 'Inscrire' }}
+            {{ submitting ? (isEdit ? 'Enregistrement…' : 'Ajout…') : (isEdit ? 'Enregistrer' : 'Inscrire') }}
           </button>
         </div>
       </div>
