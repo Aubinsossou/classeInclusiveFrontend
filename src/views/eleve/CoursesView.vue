@@ -33,13 +33,17 @@ const loadData = async () => {
   }
 }
 
-const handicapId = computed(() => eleve.value?.handicap?.id ?? 1)
-const isBlind = computed(() => handicapId.value === 2)
-const isDeaf = computed(() => handicapId.value === 3)
-const isAutisme = computed(() => handicapId.value === 5)
-const isTrisomie = computed(() => handicapId.value === 6)
-const isIMC = computed(() => handicapId.value === 8)
-const isDI = computed(() => handicapId.value === 9)
+const handicap = computed(() => eleve.value?.handicap ?? null)
+const handicapName = computed(() => handicap.value?.name || '')
+const handicapId = computed(() => handicap.value?.id ?? 1)
+
+// Détection par nom de handicap (plus robuste que l'ID qui dépend de l'ordre de création en BDD)
+const isBlind = computed(() => handicapName.value === 'Visuel')
+const isDeaf = computed(() => handicapName.value === 'Auditif')
+const isAutisme = computed(() => handicapName.value === 'Autisme')
+const isTrisomie = computed(() => handicapName.value === 'Trisomie 21')
+const isIMC = computed(() => handicapName.value === 'Moteur')
+const isDI = computed(() => handicapName.value === 'DYS' || handicapName.value === 'Cognitif')
 const isSimplified = computed(() => isTrisomie.value || isDI.value)
 const isMotor = computed(() => isIMC.value)
 
@@ -65,6 +69,8 @@ const courses = computed(() =>
     .map((c) => ({
       id: c.id,
       title: c.title || c.titre || 'Cours',
+      resume: c.resume || '',
+      contenu: c.contenu || '',
       locked: false,
       medias: c.medias || [],
       quizzes: c.quizzes || [],
@@ -76,7 +82,7 @@ const courses = computed(() =>
 )
 
 const goTo = (lessonId) => {
-  const name = handicapId.value === 2 ? 'BlindLesson' : 'Lesson'
+  const name = isBlind.value ? 'BlindLesson' : 'Lesson'
   router.push({ name, params: { subjectId: sid, lessonId } })
 }
 
@@ -290,6 +296,11 @@ onMounted(loadData)
                     Quiz disponible
                   </span>
                 </div>
+              </div>
+
+              <!-- Aperçu du contenu du cours (adapté selon handicap) -->
+              <div v-if="course.resume && (!isBlind || course.contenu)" class="course-preview">
+                <p class="course-preview-text">{{ course.resume }}</p>
               </div>
 
               <div class="course-action" aria-hidden="true">
@@ -628,6 +639,9 @@ onMounted(loadData)
 }
 .course-action {
   flex-shrink: 0;
+  display: flex;
+  justify-content: flex-end;
+  flex-basis: 40px;
 }
 .action-tag {
   padding: 5px 12px;
@@ -656,6 +670,40 @@ onMounted(loadData)
   width: 48px;
   height: 48px;
 }
+
+.course-preview {
+  margin: 14px 0 10px 0;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(120, 100, 80, 0.1);
+  border-radius: 10px;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #4a4034;
+  flex: 1;
+  min-width: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.course-preview-text {
+  margin: 0;
+  font-family: 'Verdana', 'Geneva', sans-serif;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.app--motor .course-preview {
+  padding: 18px 20px;
+  font-size: 1rem;
+}
+
+.app--simplified .course-preview {
+  font-size: 1rem;
+  line-height: 1.4;
+}
 .course-card:hover .action-arrow {
   transform: translateX(3px);
 }
@@ -672,6 +720,24 @@ onMounted(loadData)
   .course-card {
     padding: 16px;
     gap: 12px;
+  }
+  .course-preview {
+    font-size: 0.75rem;
+    padding: 10px 12px;
+    line-height: 1.4;
+    margin: 12px 0 8px 0;
+  }
+  .course-preview-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .course-action {
+    flex-basis: 36px;
+  }
+  .action-arrow {
+    width: 32px;
+    height: 32px;
   }
   .header-inner {
     padding: 14px 16px;

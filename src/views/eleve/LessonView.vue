@@ -37,11 +37,15 @@ const resume = computed(() => apiCours.value?.resume || '')
 const materiels = computed(() => apiCours.value?.materiels || [])
 const strategies = computed(() => apiCours.value?.strategies || [])
 
-const handicapId = computed(() => eleve.value?.handicap?.id ?? 1)
-const isBlind = computed(() => handicapId.value === 2)
-const isDeaf = computed(() => handicapId.value === 3)
-const isLowVision = computed(() => handicapId.value === 4)
-const hasTts = computed(() => handicapId.value === 2 || handicapId.value === 4)
+const handicap = computed(() => eleve.value?.handicap ?? null)
+const handicapName = computed(() => handicap.value?.name || '')
+const handicapId = computed(() => handicap.value?.id ?? 1)
+
+// Détection par nom de handicap (plus robuste que l'ID qui dépend de l'ordre de création en BDD)
+const isBlind = computed(() => handicapName.value === 'Visuel')
+const isDeaf = computed(() => handicapName.value === 'Auditif')
+const isLowVision = computed(() => handicapName.value === 'Malvoyant' || handicapName.value === 'Visuel')
+const hasTts = computed(() => isBlind.value || isLowVision.value)
 
 const apiCours = computed(() =>
   (eleve.value?.classe?.enseignant?.cours ?? []).find((c) => String(c.id) === lessonId),
@@ -1190,7 +1194,18 @@ onUnmounted(() => {
   text-align: center;
 }
 .lesson-content {
-  color: #6b5e4e;
+  width: 100%;
+  max-width: 100%;
+  flex: 1;
+  min-width: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  font-family: 'Verdana', 'Geneva', sans-serif;
+  font-size: 1rem;
+  line-height: 1.7;
+  color: #2c2416;
+  padding: 16px 0;
+  box-sizing: border-box;
 }
 .content-h {
   font-family: 'Georgia', 'Times New Roman', serif;
@@ -1320,6 +1335,26 @@ onUnmounted(() => {
 @media (max-width: 640px) {
   .page-body {
     padding: 20px 14px 40px;
+  }
+  .content-block {
+    padding: 16px 18px;
+  }
+  .lesson-content {
+    font-size: 0.9rem;
+    line-height: 1.6;
+    padding: 12px 0;
+  }
+  .lesson-content h1 {
+    font-size: 1.2rem;
+  }
+  .lesson-content h2 {
+    font-size: 1.05rem;
+  }
+  .lesson-content h3 {
+    font-size: 0.95rem;
+  }
+  .lesson-content h4 {
+    font-size: 0.9rem;
   }
   .cta-inner {
     flex-direction: column;

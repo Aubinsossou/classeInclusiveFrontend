@@ -913,6 +913,10 @@ function mediaBg(type) {
   .field-label {
     font-size: 0.7rem;
   }
+
+  .tiptap-wrap {
+    min-height: 150px;
+  }
 }
 
 @media (max-width: 640px) {
@@ -937,6 +941,11 @@ function mediaBg(type) {
   .cfv-card {
     border: 1.5px solid var(--pro-border);
     border-radius: var(--pro-r-md);
+    padding: 14px;
+  }
+
+  .cfv-card-programmation {
+    padding: 14px;
   }
 
   .dynlist-row {
@@ -999,6 +1008,14 @@ function mediaBg(type) {
     padding: 4px 10px;
     font-size: 0.65rem;
   }
+
+  .tiptap-wrap {
+    min-height: 120px;
+  }
+
+  .cfv-root {
+    padding: 10px;
+  }
 }
 
 .cfv-root {
@@ -1021,6 +1038,11 @@ function mediaBg(type) {
   flex-direction: column;
   gap: 20px;
   font-family: var(--pro-font);
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 .cfv-no-classe {
@@ -1126,9 +1148,13 @@ function mediaBg(type) {
 
 .cfv-grid {
   display: grid;
-  grid-template-columns: 1fr 300px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 300px);
   gap: 20px;
   align-items: start;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 @media (max-width: 860px) {
   .cfv-grid {
@@ -1150,11 +1176,13 @@ function mediaBg(type) {
   flex-direction: column;
   gap: 16px;
   margin-bottom: 50px;
+  min-width: 0;
 }
 .cfv-aside {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  min-width: 0;
 }
 .cfv-section-title {
   font-size: 0.88rem;
@@ -1263,6 +1291,9 @@ function mediaBg(type) {
 .pro-textarea {
   resize: vertical;
   min-height: 72px;
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .classe-display {
@@ -1422,15 +1453,20 @@ function mediaBg(type) {
   border: 1.5px solid var(--pro-border);
   border-radius: 0 0 var(--pro-r-md) var(--pro-r-md);
   min-height: 200px;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 :deep(.tiptap-area) {
   padding: 14px 16px;
   min-height: 200px;
+  min-width: 0;
   outline: none;
   font-family: var(--pro-font);
   font-size: 0.9rem;
   color: var(--pro-ink);
   line-height: 1.7;
+  overflow-wrap: anywhere;
 }
 :deep(.tiptap-area h2) {
   font-size: 1.2rem;
